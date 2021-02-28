@@ -1,0 +1,2 @@
+#!/bin/sh
+sleep 0.2 ; scrot -se 'mv $f ~/Downloads'

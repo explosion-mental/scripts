@@ -1,0 +1,30 @@
+#!/bin/sh
+
+# The clickable help menu. Middle click to restart wm.
+
+# If dwm is running, use dwm's readme and restart.
+pidof dwm >/dev/null &&
+	READMEFILE=/usr/local/share/dwm/larbs.mom
+	READMELUKE=~/Coooode/Luke_rice/dwm-master/larbs.mom
+	restartwm() { pkill -HUP dwm ;} #||
+		#restartwm() { i3 restart ;}
+
+refresh_modules() {
+	kill -45 $(pidof dwmblocks)		# Music module
+	kill -40 $(pidof dwmblocks)		# News
+	kill -44 $(pidof dwmblocks)		# Volume
+	kill -39 $(pidof dwmblocks)		# Forecast
+	kill -35 $(pidof dwmblocks)		# Clock
+#	kill -49 $(pidof dwmblocks)		# Help
+	kill -51 $(pidof dwmblocks)		# Help
+}
+
+case $BLOCK_BUTTON in
+	#1) groff -mom "${READMEFILE:-${XDG_DATA_HOME:-$HOME/.local/share}/larbs/readme.mom}" -Tpdf | zathura - ;;
+	1) groff -mom "$READMELUKE" -Tpdf | zathura - ;;
+	2) restartwm ;;
+	3) notify-send "❓ Help module" "\- <i><u>Updating modules...</u></i>
+- Left click to open LARBS guide.
+- Middle click to refresh window manager." && refresh_modules;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac; echo "🐹"

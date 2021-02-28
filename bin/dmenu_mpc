@@ -1,0 +1,24 @@
+#!/bin/bash
+# dmenu_mpc
+#  Play a song from the MPD playlist with dmenu.
+
+# set the colors
+#IFS=':' read nb nf sb sf <<< "dark gray:purple:blue:white"
+
+# get current mpd playlist info tab separated
+full=$(mpc -f '%position%\t%artist%\t%album%\t%title%\t%file%' playlist)
+#full=$(ls $HOME/Media/Music)
+# clean up the playlist
+list=$(awk -F"\t" -v OFS=' ' '{if($2=="" || $3=="" || $4=="") printf "%05d - %s\n", $1, $5; else printf "%05d - %s - %s - %s\n", $1, $2, $3, $4;}' <<< "$full")
+
+# prompt to select song from playlist
+song=$(dmenu -i -l 20 -nb "#420690" -nf "purple" -sb "#393a3a" -sf "#eeee69" <<< "$list")
+
+# determine song number
+num=$(awk '{print $1}' <<< "$song")
+[ -z "$song" ] && exit
+#if [ -z "$num" ]; then exit 1; fi
+
+# then play the song
+mpc play "${num// /}"
+#mpc add "$song" && notify-send "$song added👍" && mpc play

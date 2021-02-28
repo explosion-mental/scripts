@@ -1,0 +1,49 @@
+#!/bin/sh
+
+# Shows the current moon phase.
+# Signal 17
+
+moonfile="${XDG_DATA_HOME:-$HOME/.local/share}/moonphase"
+
+[ "$(stat -c %y "$moonfile" 2>/dev/null | cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ] ||
+	{ curl -sf "wttr.in/?format=%m" > "$moonfile" || exit 1 ;}
+
+icon="$(cat "$moonfile")"
+
+case "$icon" in
+	🌑) name="New" ;;
+	🌒) name="Waxing Crescent" ;;
+	🌓) name="First Quarter" ;;
+	🌔) name="Waxing Gibbous" ;;
+	🌕) name="Full" ;;
+	🌖) name="Waning Gibbous" ;;
+	🌗) name="Last Quarter" ;;
+	🌘) name="Waning Crescent" ;;
+	*) exit 1 ;;
+esac
+
+echo "${icon-?}"
+
+
+refresh_modules() {
+	kill -45 $(pidof dwmblocks)		# Music module 11
+	kill -40 $(pidof dwmblocks)		# News 6
+	kill -44 $(pidof dwmblocks)		# Volume 10
+	kill -39 $(pidof dwmblocks)		# Forecast 5
+	kill -35 $(pidof dwmblocks)		# Clock 1
+#	kill -49 $(pidof dwmblocks)		# Help 15
+}
+
+case $BLOCK_BUTTON in
+	1) refresh_modules ;;
+	3) notify-send "🌜 Moon phase module" "<i>Displays current moon phase.</i>
+- 🌑: New
+- 🌒: Waxing Crescent
+- 🌓: First Quarter
+- 🌔: Waxing Gibbous
+- 🌕: Full
+- 🌖: Waning Gibbous
+- 🌗: Last Quarter
+- 🌘: Waning Crescent" ;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac

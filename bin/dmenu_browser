@@ -1,0 +1,30 @@
+#!/bin/bash
+
+IFS=':' read nb nf sb sf <<< "blue:white:dark blue:yellow"
+
+web_search="https://duckduckgo.com/?q="
+google_search="https://www.google.com/search?q="
+youtube_search="https://www.youtube.com/results?search_query="
+wiki_search="https://en.wikipedia.org/w/index.php?search="
+delete_cache="~/.cache/search_history"
+keyword=$(echo | dmenu -nb "$nb" -nf "$nf" -sb "$sb" -sf "$sf" -i -l 5 -p "🌐Search")
+#keyword=$(tac $XDG_CACHE_HOME/web_history | dmenu -nb "$nb" -nf "$nf" -sb "$sb" -sf "$sf" -i -l 5 -p "爵 Search")
+#cache interfiring with the search terms
+#[ "$keyword" = "" ] || echo $keyword >> $XDG_CACHE_HOME/web_history
+#echo "$keyword"
+#[ -z "$keyword" ] && exit
+
+search_engine="${keyword:0:2}"
+
+search_word=${keyword#$search_engine}
+
+case $search_engine in
+	"g ") $BROWSER "$google_search$search_word" ;;
+	"y ") $BROWSER "$youtube_search$search_word" ;;
+	"w ") $BROWSER "$wiki_search$search_word" ;;
+	"s ") surf "$web_search$search_word" ;;
+	"Y ") surf "$youtube_searh$search_word" ;;
+	#"clear")echo -n "" > "$delete_cache" ;;
+	"") ;;
+	*) $BROWSER "$web_search$keyword" #; xdotool key super+2
+esac

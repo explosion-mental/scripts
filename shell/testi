@@ -1,0 +1,9 @@
+#!/bin/sh
+
+# Simple script for ''quick''notes
+#ls ~/Documents/testi/ | dmenu -l 30 | xargs -I {} nvim -o ~/Documents/testi/"{}"
+
+cmd="`ls ~/Docs/testi/ |dmenu -l 30`"
+path="$HOME/Docs/testi"
+[ -z "$cmd" ] && exit
+st -t Notes -e nvim -c 'startinsert' "$path"/"$cmd"
