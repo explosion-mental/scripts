@@ -24,7 +24,7 @@ else
 fi
 
 #if [ -z "$query" ]; then exit; fi
-# sanitise the query
+# if theres "i " on the search ...
 if [ "${query:0:2}" = "i " ]; then
 	query=$(sed \
 	-e 's/^..//'\
@@ -33,16 +33,17 @@ if [ "${query:0:2}" = "i " ]; then
 	-e 's|&|%26|g'\
 	-e 's| |+|g'\
 	<<< "$query")
-	status=1
+	status001=1
 #fi
 else
+# sanitise the query
 query=$(sed \
 	-e 's|+|%2B|g'\
 	-e 's|#|%23|g'\
 	-e 's|&|%26|g'\
 	-e 's| |+|g'\
 	<<< "$query")
-	status=2
+	status001=""
 fi
 if [ -z "$query" ]; then exit; fi
 # fetching () { Function¿
@@ -118,14 +119,17 @@ choose() {
 #	notify-send "$query one"
 #	query=$(sed 's/^..//' <<< "$query")
 #	notify-send "$query second "
-if [ "$status" = "1" ]; then
-	notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..."
-	thumball
-	choose
-	dmeurl "$videolink$id"
-else
-	choose
-fi
+#[ -z "$status" ] && choose || notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." & thumball; choose && dmeurl "$videolink$id"
+[ -z "$status001" ] && choose
+[ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose && dmeurl "$videolink$id"
+#if [ "$status" = "1" ]; then
+#	notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..."
+#	thumball
+#	choose
+#	dmeurl "$videolink$id"
+#else
+#	choose
+#fi
 	case $id in
 		# 11 digit id = video
 		???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
