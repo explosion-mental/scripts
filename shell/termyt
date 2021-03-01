@@ -46,7 +46,7 @@ query=$(sed \
 	status001=""
 fi
 if [ -z "$query" ]; then exit; fi
-# fetching () { Function¿
+#fetching () { Function?
 # fetch the results with the $query and
 # delete all escaped characters
 response="$(curl -s "https://www.youtube.com/results?search_query=$query" |\
@@ -79,6 +79,7 @@ playlink="https://youtube.com/playlist?list="
 # OPTIONAL: Display thumbnail on sxiv
 #
 cachedir="/tmp/redyt"
+#[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 if [ ! -d "$cachedir" ]; then
 	mkdir -p "$cachedir"
 fi
@@ -109,7 +110,8 @@ choose() {
 	clear
 	echo "Choose Video/Playlist to play: "
 	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-	if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
+	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
+	[ -z "$choice" ] && exit 		# if esc-ed then exit
 	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 	echo -e "$choice\t($id)"
 }
@@ -130,12 +132,12 @@ choose() {
 #else
 #	choose
 #fi
-	case $id in
-		# 11 digit id = video
-		???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
-		# 34 digit id = playlist
-		??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
-		*) exit ;;
+case $id in
 # the 'choice' variable as a second argument is to display it on a notification with dmenurl
-	esac
+		# 11 digit id = video
+	???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+		# 34 digit id = playlist
+	??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+		*) exit ;;
+esac
 # done
