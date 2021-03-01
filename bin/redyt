@@ -40,10 +40,11 @@ fi
 cachedir="/tmp/redyt"
 
 # If cachedir does not exist, create it
-if [ ! -d "$cachedir" ]; then
-#	echo "$cachedir does not exist, creating..."
-	mkdir -p "$cachedir"
-fi
+[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+#if [ ! -d "$cachedir" ]; then
+##	echo "$cachedir does not exist, creating..."
+#	mkdir -p "$cachedir"
+#fi
 
 # Limit the maximum number of requests to make
 limit=100
