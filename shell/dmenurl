@@ -3,14 +3,12 @@
 #[ "$(echo "$1"| wc -m)" -gt 30 ] && visual="${1:0:20}"..."${1: -7}" || visual="$1"
 # Manage to get it working on posix
 [ "${#1}" -gt 30 ] && visual="${1%"${1#????????????????????}"}"..."${1#"${1%???????}"}" || visual="$1"
-#alias xs="xsel -b -l /tmp/.xsel"
 
 x=$(printf "嗢 vlc\\n📥 Download\\n📋 Clipboard\\n🎧 music\\nyt-dl\\n📔PDF\\n music shuffle\\n browser\\n  sxiv\\nﮧ wget\\nw3m\\nmpv (loop)\\nmpv (float)" | dmenu -i -p "How should I open '$visual'?")
 case "$x" in
 	"嗢 vlc") notify-send "嗢 VLC Opening..." "📼<i><b>'$2'</b></i>" && vlc "$1" ;;
 	"📥 Download") notify-send "🎼Downloading..." "<u><i>'$2'</i></u>" && youtube-dl --add-metadata -i -x -f bestaudio/best "$1" && notify-send "Done👍" "📼<i><b>'$2'</b></i> has finished dowloading";;
 #	"📋 Clipboard") echo "$1" | tr -d '\n' | xclip -selection clipboard
-#	"📋 Clipboard") echo "$1" | tr -d '\n' | xs
 	"📋 Clipboard") printf '%s' "$1" | xsel -b -l /tmp/.xsel && notify-send "Clipboard📋" "<b><i>'$1'</i></b> copied" ;;
 	"🎧 music") st -t Music -e mpv "$1" --no-video & disown ;;
 	"📔PDF") curl -sL "$1" > "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")" && zathura "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 & ;;

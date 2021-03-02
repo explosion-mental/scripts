@@ -7,7 +7,8 @@
 # yt -r					takes input and prompts using rofi ($guicmd)
 defcmd="fzf"
 # guicmd="rofi -dmenu -i" #uncomment next line for dmenu
-guicmd="dmenu -nb "black" -nf "white" -sb "#E62117" -sf "black" -i -l 15"
+guicmd="dmenu -nb black -nf white -sb #E62117 -sf black -i -l 15"
+# yt colors 🤓
 promptcmd="$defcmd"
 [ -z "$*" ] && echo -n " Search: " && read -r query ||
 	case "$1" in
