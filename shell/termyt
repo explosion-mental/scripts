@@ -9,21 +9,12 @@ defcmd="fzf"
 # guicmd="rofi -dmenu -i" #uncomment next line for dmenu
 guicmd="dmenu -nb "black" -nf "white" -sb "#E62117" -sf "black" -i -l 15"
 promptcmd="$defcmd"
-if [ -z "$*" ]; then
-	echo -n " Search: "
-	read -r query
-else
+[ -z "$*" ] && echo -n " Search: " && read -r query ||
 	case "$1" in
 		-r) query=$(echo | $guicmd -p "🔎 Search: ")
-#			promptcmd="$guicmd -p Video:";;
-# cache?	-r) query=$(cat $XDG_CACHE_HOME/yt_history | dmenu -i -l 1 -p "🔎Search: ")
-#		[ "$query" = "" ] || echo $query >> $XDG_CACHE_HOME/yt_history
-		promptcmd="$guicmd -p Video:";;
+			promptcmd="$guicmd -p Video:";;
 		*) query="$*";;
 	esac
-fi
-
-#if [ -z "$query" ]; then exit; fi
 # if theres "i " on the search ...
 if [ "${query:0:2}" = "i " ]; then
 	query=$(sed \
@@ -34,7 +25,6 @@ if [ "${query:0:2}" = "i " ]; then
 	-e 's| |+|g'\
 	<<< "$query")
 	status001=1
-#fi
 else
 # sanitise the query
 query=$(sed \
@@ -45,7 +35,7 @@ query=$(sed \
 	<<< "$query")
 	status001=""
 fi
-if [ -z "$query" ]; then exit; fi
+[ -z "$query" ] && exit
 #fetching () { Function?
 # fetch the results with the $query and
 # delete all escaped characters
@@ -62,10 +52,6 @@ getresults() {
 	  grep -oP "$1" <<< "$response" |\
 		awk -F\" -v p="$2" '{ print $1 "\t" p " " $NF}'
 }
-# only one thumbnail, the selected one, before watching the video was the first use of this
-thumb() {
-	curl -sL "$img/$id/$max" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
-	}
 # get the list of videos/playlists and their ids in videoids and playlistids
 videoids=$(getresults "$vgrep")
 playlistids=$(getresults "$pgrep" "(playlist)")
@@ -79,15 +65,20 @@ playlink="https://youtube.com/playlist?list="
 # OPTIONAL: Display thumbnail on sxiv
 #
 cachedir="/tmp/redyt"
-#[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-if [ ! -d "$cachedir" ]; then
-	mkdir -p "$cachedir"
-fi
+[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+#if [ ! -d "$cachedir" ]; then
+#	mkdir -p "$cachedir"
+#fi
 img="http://img.youtube.com/vi"
 max="maxresdefault.jpg"
 HQ="hqdefault.jpg"
 mid="mqdefault.jpg"
 low="sddefault.jpg"
+# only one thumbnail, the selected one, before watching the video was the first use of this
+thumb() {
+	curl -sL "$img/$id/$max" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
+	}
+# all 30 thumbnails
 thumball() {
 	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$max," > "$cachedir"/thumb.txt
 	while read -r URL; do
@@ -98,40 +89,20 @@ thumball() {
 	notify-send "Finished⌛" && sxiv -bpt -s f "$cachedir"/*.jpg && rm "${cachedir:?}"/*
 }
 
-#		curl -sL "$URL" > "$cachedir/$(echo "$ids" | sed "${var}q;d" | awk '{print $1}').jpg";
-# The only problem here is that images don't appear in the "algorithm" order but does it really matter?
-#		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | tac | sed "${var}q;d" | cut -d'	' -f2).jpg";
-
-# prompt the results to user infinitely until they exit (escape)
-# while true; do # I don't need to search infinitely
-
 # Making this a function because I will be repeating this
 choose() {
 	clear
 	echo "Choose Video/Playlist to play: "
 	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
 	[ -z "$choice" ] && exit 		# if esc-ed then exit
 	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 	echo -e "$choice\t($id)"
 }
 
 # if user wants to view first 30 thumbnails first then...
-#if [ "${query:0:2}" = "i+" ]; then
-#	notify-send "$query one"
-#	query=$(sed 's/^..//' <<< "$query")
-#	notify-send "$query second "
-#[ -z "$status" ] && choose || notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." & thumball; choose && dmeurl "$videolink$id"
 [ -z "$status001" ] && choose
 [ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose && dmeurl "$videolink$id"
-#if [ "$status" = "1" ]; then
-#	notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..."
-#	thumball
-#	choose
-#	dmeurl "$videolink$id"
-#else
-#	choose
-#fi
+
 case $id in
 # the 'choice' variable as a second argument is to display it on a notification with dmenurl
 		# 11 digit id = video
@@ -140,4 +111,3 @@ case $id in
 	??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
 		*) exit ;;
 esac
-# done
