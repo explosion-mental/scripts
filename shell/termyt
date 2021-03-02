@@ -83,8 +83,7 @@ thumball() {
 	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$max," > "$cachedir"/thumb.txt
 	while read -r URL; do
 		var=$((var + 1))
-
-		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2).jpg";
+		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
 	done < "$cachedir"/thumb.txt
 	notify-send "Finished⌛" && sxiv -bpt -s f "$cachedir"/*.jpg && rm "${cachedir:?}"/*
 }
