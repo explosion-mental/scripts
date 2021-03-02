@@ -1,23 +1,19 @@
-#!/bin/bash
+#!/bin/sh
 
-if [[ "$(echo $1 | wc -m)" -gt 30 ]]
-then
-	visual="${1:0:20}"..."${1: -7}"
-else
-	visual="$1"
-fi
-echo "$visual"
-alias xs="xsel -l /tmp/.xsel"
+#[ "$(echo "$1"| wc -m)" -gt 30 ] && visual="${1:0:20}"..."${1: -7}" || visual="$1"
+# Manage to get it working on posix
+[ "${#1}" -gt 30 ] && visual="${1%"${1#????????????????????}"}"..."${1#"${1%???????}"}" || visual="$1"
+#alias xs="xsel -b -l /tmp/.xsel"
 
-x=$(echo -e "嗢 vlc\n📥 Download\n📔PDF\n📋 Clipboard\n🎧 music\n music shuffle\n browser\n  sxiv\nﮧ wget\nw3m\nmpv (loop)\nmpv (float)" | dmenu -i -p "How should I open '$visual'?")
+x=$(printf "嗢 vlc\\n📥 Download\\n📋 Clipboard\\n🎧 music\\nyt-dl\\n📔PDF\\n music shuffle\\n browser\\n  sxiv\\nﮧ wget\\nw3m\\nmpv (loop)\\nmpv (float)" | dmenu -i -p "How should I open '$visual'?")
 case "$x" in
-	"嗢 vlc") notify-send "嗢 VLC" "Opening...\n📼<i><b>'$2'</b></i>" && vlc "$1" ;;
+	"嗢 vlc") notify-send "嗢 VLC Opening..." "📼<i><b>'$2'</b></i>" && vlc "$1" ;;
 	"📥 Download") notify-send "🎼Downloading..." "<u><i>'$2'</i></u>" && youtube-dl --add-metadata -i -x -f bestaudio/best "$1" && notify-send "Done👍" "📼<i><b>'$2'</b></i> has finished dowloading";;
-	"📔PDF") curl -sL "$1" > "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")" && zathura "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 & ;;
 #	"📋 Clipboard") echo "$1" | tr -d '\n' | xclip -selection clipboard
-	"📋 Clipboard") echo "$1" | tr -d '\n' | xs
-	notify-send "'$1' copied to clipboard📋" & ;;
+#	"📋 Clipboard") echo "$1" | tr -d '\n' | xs
+	"📋 Clipboard") printf '%s' "$1" | xsel -b -l /tmp/.xsel && notify-send "Clipboard📋" "<b><i>'$1'</i></b> copied" ;;
 	"🎧 music") st -t Music -e mpv "$1" --no-video & disown ;;
+	"📔PDF") curl -sL "$1" > "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")" && zathura "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 & ;;
 	" music shuffle") st -t Music -e mpv "$1" --no-video --shuffle & disown ;;
 	" browser") $BROWSER "$1" 2>/dev/null & disown ;;
 	"  sxiv") sxiv "$1" 2&>/dev/null & disown ;;
@@ -25,6 +21,5 @@ case "$x" in
 	w3m) w3m "$1" 2&>/dev/null & disown ;;
 	"mpv (loop)") mpv -quiet --loop "$1" 2&>/dev/null & disown ;;
 	"mpv (float)") mpv --geometry=+0-0 --autofix=30% --title="Video" /dev/video0 "$1" 2&>/dev/null & disown ;;
+	"yt-dl") qndl "$1" >/dev/null 2>&1 ;;
 esac
-#ytdlplaylist) echo "$1" | xclip -selection clipboard;;
-	#Clipboard) echo "$1" | xclip -selection clipboard;;
