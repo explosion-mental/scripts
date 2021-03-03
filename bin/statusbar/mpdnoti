@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # mpdnotification modified to not be a service and be active when I click music module or press the shortcut
 if [ "$MPD_HOST" ]; then HOST="$MPD_HOST"; else HOST="localhost"; fi
 if [ "$MPD_PORT" ]; then PORT="$MPD_PORT"; else PORT="6600"; fi
@@ -6,7 +7,7 @@ MPD_TCP="/dev/tcp/$HOST/$PORT"
 coverDir="$HOME/.local/share/covers"
 expireTime="3300"
 
-function mpd_sndcommmand() {
+mpd_sndcommmand() {
 	# $1 command
 	exec 5<> $MPD_TCP 2>/dev/null
 	[[ $? -gt 0 ]] && return 1
@@ -18,8 +19,7 @@ function mpd_sndcommmand() {
 	return 0
 }
 
-
-function mpd_getinfo() {
+mpd_getinfo() {
 	mpd_sndcommmand currentsong
 	[[ $? -gt 0 ]] && return 1
 	_tmp=$_ret
@@ -38,16 +38,18 @@ function mpd_getinfo() {
 	mpdPlaylistL=$(grep "^playlistlength: " <<< "$_tmp" 2>/dev/null | sed "s/playlistlength: //")
 }
 
-
-function handle_event() {
-			mpd_getinfo
-			mpdAlbum="${mpdAlbum//&/&amp;}"
-			mpdTitle="${mpdTitle//&/&amp;}"
-			mpdArtist="${mpdArtist//&/&amp;}"
-	#		[[ "${#mpdArtist}" -gt "25" ]] && mpdArtist=$(echo "${mpdArtist:0:25}...")
-	#		[[ "${#mpdTitle}" -gt "25" ]] && mpdTitle=$(echo "${mpdTitle:0:25}...")
-	#		[[ "${#mpdAlbum}" -gt "25" ]] && mpdAlbum=$(echo "${mpdAlbum:0:25}...")
-			notify-send --expire-time="${expireTime}" -i "$coverDir/$mpdAlbum" "$mpdTitle" "By: <b><i>${mpdArtist}</i></b>\nAlbum: <u><i>${mpdAlbum}</i></u>\nLength: <i>${mpdLength}</i>\nPosition: <i>${mpdSongID} / ${mpdPlaylistL}</i>"
+handle_event() {
+	mpd_getinfo
+	mpdAlbum="${mpdAlbum//&/&amp;}"
+	mpdTitle="${mpdTitle//&/&amp;}"
+	mpdArtist="${mpdArtist//&/&amp;}"
+#	[[ "${#mpdArtist}" -gt "25" ]] && mpdArtist=$(echo "${mpdArtist:0:25}...")
+#	[[ "${#mpdTitle}" -gt "25" ]] && mpdTitle=$(echo "${mpdTitle:0:25}...")
+#	[[ "${#mpdAlbum}" -gt "25" ]] && mpdAlbum=$(echo "${mpdAlbum:0:25}...")
+	notify-send --expire-time="${expireTime}" -i "$coverDir/$mpdAlbum" "$mpdTitle" "\By: <b><i>${mpdArtist}</i></b>
+Album: <u><i>${mpdAlbum}</i></u>
+Length: <i>${mpdLength}</i>
+Position: <i>${mpdSongID} / ${mpdPlaylistL}</i>"
 }
 
 handle_event
