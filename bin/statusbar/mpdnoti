@@ -1,21 +1,20 @@
 #!/bin/bash
 
-# mpdnotification modified to not be a service and be active when I click music module or press the shortcut
 if [ "$MPD_HOST" ]; then HOST="$MPD_HOST"; else HOST="localhost"; fi
 if [ "$MPD_PORT" ]; then PORT="$MPD_PORT"; else PORT="6600"; fi
 MPD_TCP="/dev/tcp/$HOST/$PORT"
 coverDir="$HOME/.local/share/covers"
 #tmpCover="/tmp/cover"
-baseCover="/usr/share/mpd-libnotify/extras/base.png"
-topCover="/usr/share/mpd-libnotify/extras/top.png"
-noCover="/usr/share/mpd-libnotify/extras/NOCOVER.png"
-mpdPID=$(pidof mpd)
-mpdArtist="Could not find Artist's name"
-mpdTitle="Could not find Song's title"
-mpdAlbum="Could not find Album's name"
-mpcLength="Could not find Song's length"
-mpcInfo="Cound not find Song's info"
-showCover="true"
+#baseCover="/usr/share/mpd-libnotify/extras/base.png"
+#topCover="/usr/share/mpd-libnotify/extras/top.png"
+#noCover="/usr/share/mpd-libnotify/extras/NOCOVER.png"
+#mpdPID=$(pidof mpd)
+#mpdArtist="Could not find Artist's name"
+#mpdTitle="Could not find Song's title"
+#mpdAlbum="Could not find Album's name"
+#mpcLength="Could not find Song's length"
+#mpcInfo="Cound not find Song's info"
+#showCover="true"
 #expireTime="1300"
 expireTime="3300"
 
@@ -23,7 +22,7 @@ function mpd_sndcommmand() {
 	# $1 command
 	exec 5<> $MPD_TCP 2>/dev/null
 	[[ $? -gt 0 ]] && return 1
-	echo $1 >&5
+	echo "$1" >&5
 	echo "close" >&5
 	tmp=$(cat <&5)
 	exec 5>&-
@@ -40,9 +39,11 @@ function mpd_getinfo() {
 	mpdArtist=$(grep "^Artist: " <<< "$_tmp" 2>/dev/null | sed "s/Artist: //")
 	mpdAlbum=$(grep "^Album: " <<< "$_tmp" 2>/dev/null | sed "s/Album: //")
 	_songtime=$(grep "^Time: " <<< "$_tmp" 2>/dev/null | sed "s/Time: //" | cut -f 1 -d :)
-	(( _mm=$_songtime / 60 ))
+	#(( _mm=$_songtime / 60 ))
+	(( _mm=_songtime / 60 ))
 	[[ ${#_mm} -eq 1 ]] && _mm="0$_mm"
-	(( _ss=$_songtime - $_mm * 60 ))
+	#(( _ss=$_songtime - $_mm * 60 ))
+	(( _ss=_songtime - _mm * 60 ))
 	[[ ${#_ss} -eq 1 ]] && _ss="0$_ss"
 	mpdLength="$_mm:$_ss"
 	mpd_sndcommmand "status"
@@ -54,9 +55,12 @@ function mpd_getinfo() {
 
 function handle_event() {
 			mpd_getinfo
-			mpdAlbum=$(echo "$mpdAlbum" | sed -e 's/&/&amp;/')
-			mpdTitle=$(echo "$mpdTitle" | sed -e 's/&/&amp;/')
-			mpdArtist=$(echo "$mpdArtist" | sed -e 's/&/&amp;/')
+			#mpdAlbum=$(echo "$mpdAlbum" | sed -e 's/&/&amp;/')
+			#mpdTitle=$(echo "$mpdTitle" | sed -e 's/&/&amp;/')
+			#mpdArtist=$(echo "$mpdArtist" | sed -e 's/&/&amp;/')
+			mpdAlbum="${mpdAlbum//&/&amp;}"
+			mpdTitle="${mpdTitle//&/&amp;}"
+			mpdArtist="${mpdArtist//&/&amp;}"
 	#		[[ "${#mpdArtist}" -gt "25" ]] && mpdArtist=$(echo "${mpdArtist:0:25}...")
 	#		[[ "${#mpdTitle}" -gt "25" ]] && mpdTitle=$(echo "${mpdTitle:0:25}...")
 	#		[[ "${#mpdAlbum}" -gt "25" ]] && mpdAlbum=$(echo "${mpdAlbum:0:25}...")
