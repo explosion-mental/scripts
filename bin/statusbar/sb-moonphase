@@ -31,7 +31,7 @@ refresh_modules() {
 	kill -44 $(pidof dwmblocks)		# Volume 10
 	kill -39 $(pidof dwmblocks)		# Forecast 5
 	kill -35 $(pidof dwmblocks)		# Clock 1
-#	kill -49 $(pidof dwmblocks)		# Help 15
+	kill -49 $(pidof dwmblocks)		# Help 15
 }
 
 case $BLOCK_BUTTON in

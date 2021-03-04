@@ -1,25 +1,22 @@
-#!/bin/bash
+#!/bin/sh
 
 # Music module
 # Signal 11
-filter() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
-filternoti() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/$/&🎵/}" | paste -sd ' ' -;}
+#filter() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
+filter="$(mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;)"
 onlytitle() { mpc --format %title% | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
 
 pidof -x sb-mpdup >/dev/null 2>&1 || sb-mpdup >/dev/null 2>&1 &
 
-if [[ "$(echo `filter` | wc -m)" -gt 45 ]]
-then
-	echo `onlytitle`
-else
-echo `filter`
-fi
+#[ "$(filter | wc -m)" -gt 45 ] && onlytitle || filter
+[ "${#filter}" -gt 45 ] && onlytitle || echo "$filter"
+
 case $BLOCK_BUTTON in
-	1) mpc toggle ;;  # right click, pause/unpause
-	2) mpdnoti ;;		# Notification with album cover(time 0.10)
-	3) setsid -f "$TERMINAL" -e ncmpcpp -s visualizer ;;  # right click, pause/unpause
-	#4) mpc prev   | filter ;;  # scroll up, previous
-	#5) mpc next   | filter ;;  # scroll down, next
+	1) mpc toggle ;;	# right click, pause/unpause
+	2) setsid -f "$TERMINAL" -e ncmpcpp -s visualizer ;;  # open music player
+	3) mpdnoti ;;		# Notification with album cover(time 0.10,0.7)
+	#4) mpc prev ;;		# scroll up, previous
+	#5) mpc next ;;		# scroll down, next
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 #	*)  ;;
 esac
