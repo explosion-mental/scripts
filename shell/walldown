@@ -1,0 +1,41 @@
+#!/bin/bash
+
+# If cachedir does not exist, create it
+cachedir="/tmp/walldown"
+[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+tagoptions="minimalism\nCyberpunk 2077\nfantasy girl\ndigital art\nanime\nnature\n4K"
+
+if [ -z "$1" ]; then
+	# Ask the user to enter a wallhaven
+	query=$(echo -e "$tagoptions" | dmenu -p "Search Wallhaven: " -i)
+	# If no subreddit was chosen, exit
+	[ -z "$query" ] && exit 1
+# Otherwise assign the first argument to the
+# subreddit variable
+else
+	query="$1"
+fi
+
+#sortoptions="date_added\nrandom\nrelevance\nviews\nfavorites\ntoplist"
+sortoptions="date_added\nrelevance\nrandom\nviews\nfavorites\ntoplist"
+sorting=$(echo -e "$sortoptions" | dmenu -p "Sort Order: " -i)
+[ -z "$sorting" ] && exit
+
+query="${query/ */+}"
+#query="$(sed 's/ /+/g' <<<"$query")"
+#echo $query
+notify-send "⬇️ Downloading wallpapers 🖼️"
+# Set your resolution here
+#res=1920x1080
+#maxpage=3
+for i in $(seq 1 3);
+do
+  #curl -s https://wallhaven.cc/api/v1/search\?atleast\=1920x1080\&sorting\=$sorting\&q\=$query\&page\=$i > tmp.txt
+  curl -s https://wallhaven.cc/api/v1/search\?atleast\=1920x1080\&sorting\=$sorting\&q\=$query\&page\=$i > $cachedir/tmp.txt
+  page=$(cat $cachedir/tmp.txt | jq '.' | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
+  wget -nc -P "$cachedir" "$page"
+done
+rm $cachedir/tmp.txt
+notify-send "😊 Download finish ✅"
+sxiv -abp -s f $cachedir/*
+rm "$cachedir"/*
