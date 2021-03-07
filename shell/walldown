@@ -15,34 +15,22 @@ if [ -z "$1" ]; then
 else
 	query="$1"
 fi
-
+# Instead of variables you can translate it into a file like redyt but
+# I don't really need that.
 sortoptions="don't care\ndate_added\nrandom\nrelevance\nviews\nfavorites\ntoplist"
 sorting=$(echo "$sortoptions" | dmenu -p "Sort Order: " -i)
 [ -z "$sorting" ] && exit
 [ "$sorting" = "don't care" ] && sorting="" || sorting="\&sorting\=$sorting"
-echo $sorting
 
 resopt="don't care\n1920x1080\n1920x1200\n720x\nrelevance\nviews\nfavorites\ntoplist"
 res=$(echo "$resopt" | dmenu -p "Resolution: " -i)
 [ -z "$res" ] && exit
 [ "$res" = "don't care" ] && res="" || res="atleast\=$res"
-echo $res
-#query="${query/ */+}"
+#query="${query/ */+}"	#doesn't work on posix
 query="$(echo "$query" | sed 's/ /+/g')"
 notify-send "Walldown" "📩Downloading wallpapers🌋\n⏳Queuing..."
 
 maxpage=4
-
-# sometimes the pictures are not on 1920x1080 so no images are displayed
-# (need to make that an optional)
-# IDEAL url
-# https://wallhaven.cc/api/v1/search\?\&q\=shrek
-# https://wallhaven.cc/api/v1/search\?  "atleast\=$res"  "\&sorting\=$sorting"  \&q\=$query\&page\=$i
-#curl -s https://wallhaven.cc/api/v1/search\?atleast\=$res\&sorting\=$sorting\&q\=$query\&page\=$i > $cachedir/tmp.json
-#	page=$(curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i | jq '.' | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
-#	#page=$(jq '.' < $cachedir/tmp.txt | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
-#	[ -z $(echo $page | head -n1) ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥" && exit
-#curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i > $cachedir/tmp.json
 for i in $(seq 1 $maxpage);
 do
 	curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i
@@ -51,7 +39,6 @@ page=$(jq '.' < $cachedir/tmp.json | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\
 [ -z $page ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥" && rm "$cachedir"/* && exit
 	# task spooler (remove it if you don't needed)
 ts -nf wget -nc -P $cachedir $page 	# never doble quote $page (is a list)
-
 notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵"
-sxiv -abp -s f $cachedir/* #&& notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵" || notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥"
+sxiv -abp -s f $cachedir/*
 rm "$cachedir"/*
