@@ -14,7 +14,7 @@ promptcmd="$defcmd"
 	case "$1" in
 		-r) query=$(echo | $guicmd -p "🔎 Search: ")
 			promptcmd="$guicmd -p Video:";;
-		*) query="$*";;
+		*)  query="$*";;
 	esac
 # if theres "i " on the search ...
 if [ "${query:0:2}" = "i " ]; then
@@ -67,9 +67,6 @@ playlink="https://youtube.com/playlist?list="
 #
 cachedir="/tmp/redyt"
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-#if [ ! -d "$cachedir" ]; then
-#	mkdir -p "$cachedir"
-#fi
 img="http://img.youtube.com/vi"
 max="maxresdefault.jpg"
 HQ="hqdefault.jpg"
@@ -88,7 +85,6 @@ thumball() {
 	done < "$cachedir"/thumb.txt
 	notify-send "Finished⌛" && sxiv -bpt -s f "$cachedir"/*.jpg && rm "${cachedir:?}"/*
 }
-
 # Making this a function because I will be repeating this
 choose() {
 	clear
@@ -98,10 +94,9 @@ choose() {
 	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 	echo -e "$choice\t($id)"
 }
-
 # if user wants to view first 30 thumbnails first then...
 [ -z "$status001" ] && choose
-[ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose && dmeurl "$videolink$id"
+[ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose #&& dmeurl "$videolink$id"
 
 case $id in
 # the 'choice' variable as a second argument is to display it on a notification with dmenurl

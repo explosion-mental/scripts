@@ -1,38 +1,59 @@
-#!/bin/bash
+#!/bin/sh
 
 # If cachedir does not exist, create it
-#cachedir="/tmp/walldown"
-cachedir=/tmp/redyt	# this directory so sxiv goes into 9 tag(uncoment the otherone)
+#cachedir="/tmp/walldown" #apparently sxiv displays wal tfw
+cachedir="/tmp/walld"
+#cachedir=/tmp/redyt	# this directory so sxiv goes into 9 tag(uncoment the otherone)
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 tagoptions="minimalism\nCyberpunk 2077\nfantasy girl\ndigital art\nanime\nnature\n4K"
 
 if [ -z "$1" ]; then
 	# Ask the user to enter a wallhaven
-	query=$(echo -e "$tagoptions" | dmenu -p "Search Wallhaven: " -i)
+	query=$(echo "$tagoptions" | dmenu -p "Search Wallhaven: " -i)
 	[ -z "$query" ] && exit 	# If nothing was chosen, exit
 # Otherwise assign the first argument to the query
 else
 	query="$1"
 fi
 
-sortoptions="random\ndate_added\nrelevance\nviews\nfavorites\ntoplist"
-sorting=$(echo -e "$sortoptions" | dmenu -p "Sort Order: " -i)
+sortoptions="don't care\ndate_added\nrandom\nrelevance\nviews\nfavorites\ntoplist"
+sorting=$(echo "$sortoptions" | dmenu -p "Sort Order: " -i)
 [ -z "$sorting" ] && exit
+[ "$sorting" = "don't care" ] && sorting="" || sorting="\&sorting\=$sorting"
+echo $sorting
 
-query="${query/ */+}"
+resopt="don't care\n1920x1080\n720x\nrelevance\nviews\nfavorites\ntoplist"
+res=$(echo "$resopt" | dmenu -p "Resolution: " -i)
+[ -z "$res" ] && exit
+[ "$res" = "don't care" ] && res="" || res="atleast\=$res"
+echo $res
+#query="${query/ */+}"
+query="$(echo "$query" | sed 's/ /+/g')"
 notify-send "Walldown" "📩Downloading wallpapers🌋\n⏳Queuing..."
 
 # Set your resolution here
-res=1920x1080
+#res=1920x1080
 maxpage=4
 for i in $(seq 1 $maxpage);
 do
-  #curl -s https://wallhaven.cc/api/v1/search\?atleast\=1920x1080\&sorting\=$sorting\&q\=$query\&page\=$i > tmp.txt
-	curl -s https://wallhaven.cc/api/v1/search\?atleast\=$res\&sorting\=$sorting\&q\=$query\&page\=$i > $cachedir/tmp.json
+	# sometimes the pictures are not on 1920x1080 so no images are displayed
+	# (need to make that an optional)
+	# IDEAL url
+	# https://wallhaven.cc/api/v1/search\?\&q\=shrek
+	# https://wallhaven.cc/api/v1/search\?  "atleast\=$res"  "\&sorting\=$sorting"  \&q\=$query\&page\=$i
+	#curl -s https://wallhaven.cc/api/v1/search\?atleast\=$res\&sorting\=$sorting\&q\=$query\&page\=$i > $cachedir/tmp.json
+#	page=$(curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i | jq '.' | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
+#	#page=$(jq '.' < $cachedir/tmp.txt | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
+#	[ -z $(echo $page | head -n1) ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥" && exit
+
+
+	curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i > $cachedir/tmp.json
 	page=$(jq '.' < $cachedir/tmp.json | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
-	wget -nc -P $cachedir $page
+	#[ -z $page ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥" && exit
+	# task spooler (remove it if you don't needed)
+	ts -nf wget -nc -P $cachedir $page 	# never doble quote $page (is a list)
 done
 
-notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵"
-sxiv -abp -s f $cachedir/*
+#notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵"
+sxiv -abp -s f $cachedir/* && notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵" || notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥"
 rm "$cachedir"/*
