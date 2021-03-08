@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 readonly ID_PREVIEW="preview"
 
-#PLAY_GIF="yes"
+PLAY_GIF="yes"
 # By enabling this option the GIF will be animated, by leaving it commented like it
 # is now will make the gif previews behave the same way as video previews.
 
@@ -19,6 +19,9 @@ PDF_FILE=""
 # Initialize the variables and required files
 [ -f "$PDF_PAGE_CONFIG" ] && PDF_PAGE=$(cat $PDF_PAGE_CONFIG) || touch "$PDF_PAGE_CONFIG"
 [ -f "$PDF_FILE_CONFIG" ] && PDF_FILE=$(cat $PDF_FILE_CONFIG) || touch "$PDF_FILE_CONFIG"
+
+
+# Use local instead of declare?
 
 
 # Create temporary working directory if the directory structure doesn't exist
@@ -92,13 +95,14 @@ previewfont() {
 previewgif() {
 [ ! -d "/tmp$PWD/$6/" ] && mkdir -p "/tmp$PWD/$6/" ; convert -coalesce "$PWD/$6" "/tmp$PWD/$6/$6.png"
     #if [[ ! -z "$PLAY_GIF" ]]; then
-    if [ ! -n "$PLAY_GIF" ]; then
+    if [ ! -z "$PLAY_GIF" ]; then
         for frame in $(ls -1 /tmp$PWD/$6/$6*.png | sort -V); do
             declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
                 [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
                 [path]="$frame") \
                 > "$FIFO_UEBERZUG"
             # Sleep between frames to make the animation smooth.
+	    # infinite loop on gifs?
             sleep .07
         done
     else
