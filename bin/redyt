@@ -60,7 +60,7 @@ imgs=$(jq '.' < "$cachedir/tmp.json" | grep url_overridden_by_dest | grep -Eo "h
 # If there are no images, exit
 [ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
-kill -37 $(pidof dwmblocks)	#task module bar
+kill -37 $(pidof dwmblocks)	# task module bar
 # Download images to $cachedir (use task spooler)
 ts -nf wget -P "$cachedir" $imgs
 
