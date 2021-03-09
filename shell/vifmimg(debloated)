@@ -1,6 +1,12 @@
 #!/usr/bin/env bash
 readonly ID_PREVIEW="preview"
 
+#
+# I removed the inc and dec functions and pdf page variable,
+# if you want to take a look at the second page better off opening
+# zathura because it takes long and its buggy
+# PD: of course I don't need that "feature"
+#
 PLAY_GIF="yes"
 # By enabling this option the GIF will be animated, by leaving it commented like it
 # is now will make the gif previews behave the same way as video previews.
@@ -9,22 +15,15 @@ PLAY_GIF="yes"
 # By enabling this option the script will remove the preview file after it is drawn
 # and by doing so the preview will always be up-to-date with the file.
 # This however, requires more CPU and therefore affects the overall performance.
-
-# The messy code below is for moving pages in pdf files in the vifm file preview by
-# utilizing the < and > keys which will be bound to `vifmimg inc` or `vifmimg dec`.
-# and some weird bashism
-#PDF_PAGE_CONFIG="$HOME/.config/vifm/vifmimgpdfpage"
-#PDF_PAGE_CONFIG="$HOME/.config/vifm/vifmimgpdfpage"
+# I think that doen't work, if it does its really the same for me
 PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
 PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
-PDF_PAGE=1
 PDF_FILE=""
 # cache on home dir scructure so it keeps after boots?
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg"
 #cachedir="/tmp/vifmimg"
 
-# Initialize the variables and required files
-[ -f "$PDF_PAGE_CONFIG" ] && PDF_PAGE=$(cat "$PDF_PAGE_CONFIG") || touch "$PDF_PAGE_CONFIG"
+# Initialize the variable and required files
 [ -f "$PDF_FILE_CONFIG" ] && PDF_FILE=$(cat "$PDF_FILE_CONFIG") || touch "$PDF_FILE_CONFIG"
 
 # Create temporary working directory if the directory structure doesn't exist
@@ -113,34 +112,30 @@ previewpdf() {
 		PDF_TYPE="jpg"
 		PDF_PATH="$cachedir/$6"
 	fi
-
-[ ! "$6" == "$PDF_FILE" ] &&
-        PDF_PAGE=1
-        echo 1 > "$PDF_PAGE_CONFIG"
- 	rm -f "${PDF_PATH:?}"
-
-if [ ! "$PDF_PAGE" == "1" ] && [ -f "$PDF_PATH.$PDF_TYPE" ]; then
-	rm -f "${PDF_PATH:?}"
-    fi
+# Let's just make it if the 7th arg exist (in case you want png for some reason)
+##[ -n "$7" ] &&
+##	PDF_TYPE="jpg"
+##	PDF_PATH="$cachedir/$6"
+##
+##[ -z "$7" ] &&
+##	PDF_TYPE="png"
+##	PDF_PATH="$cachedir/$6.png"
+##
+[ ! "$6" == "$PDF_FILE" ] && rm -f "${PDF_PATH:?}"
 
 [ ! -f "$PDF_PATH.$PDF_TYPE" ] &&
-		# convert it to jpeg or pdf?
-		if [[ $PDF_TYPE == "jpg" ]]; then
-        	pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$PDF_PATH"
-		else
-			pdftoppm -png -f $PDF_PAGE -singlefile "$6" "$PDF_PATH"
-		fi
-    echo "$6" > "$PDF_FILE_CONFIG"
+	[ $PDF_TYPE == "jpg" ] &&
+	pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$PDF_PATH"
 
-    declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-#        [path]="/tmp$cachedir/$6.png") \
-	[path]="$PDF_PATH.$PDF_TYPE") \
-        > "$FIFO_UEBERZUG"
+echo "$6" > "$PDF_FILE_CONFIG"
+
+declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
+        	[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
+		[path]="$PDF_PATH.$PDF_TYPE") \
+        	> "$FIFO_UEBERZUG"
 }
 
-
-previewmagick() {
+previewmagick() { #is this one faster then normal?, maybe just lowering the resolution??
 [ ! -f "$cachedir/$6.png" ] && convert -thumbnail "$(identify -format "%wx%h" "$6")" "$PWD/$6" "$cachedir/$6.png"
     declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
         [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
@@ -148,26 +143,8 @@ previewmagick() {
         > "$FIFO_UEBERZUG"
 }
 
-inc() {
-	VAL="$(cat "$PDF_PAGE_CONFIG")"
-	#echo "$(expr $VAL + 1)" > $PDF_PAGE_CONFIG
-	VAL=$((VAL + 1)) > "$PDF_PAGE_CONFIG"
-}
-
-dec() {
-	VAL="$(cat "$PDF_PAGE_CONFIG")"
-	#echo "$(expr $VAL - 1)" > $PDF_PAGE_CONFIG
-	VAL=$((VAL - 1)) > "$PDF_PAGE_CONFIG"
-	[ $VAL -le 0 ] && echo 0 > "$PDF_PAGE_CONFIG"
-	#if [[ $VAL -le 0 ]]; then
-	#	echo 0 > $PDF_PAGE_CONFIG
-	#fi
-}
-
 main() {
     case "$1" in
-        "inc") inc "$@" ;;
-        "dec") dec "$@" ;;
         "clear") previewclear "$@" ;;
         "clean") fileclean "$@" ;;
         "draw") preview "$@" ;;
