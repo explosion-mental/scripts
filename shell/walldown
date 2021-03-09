@@ -41,4 +41,4 @@ page=$(jq '.' < $cachedir/tmp.json | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\
 ts -nf wget -nc -P $cachedir $page 	# never doble quote $page (is a list)
 notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵"
 sxiv -abp -s f $cachedir/*
-rm "$cachedir"/*
+rm "${cachedir:?}"/*
