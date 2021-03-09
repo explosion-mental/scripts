@@ -2,14 +2,13 @@
 
 # Check if necessary programs are installed
 #for prog in dmenu jq sxiv; do
-#	[ ! "$(which "$prog")" ] && echo "Please install $prog!" && exit 1
+#[ ! "$(which "$prog")" ] && echo "Please install $prog!" && exit 1
 #done
 # If notify-send is not installed, use echo as notifier
 [ ! "$(which notify-send)" ] && notifier="echo" || notifier="notify-send"
 
 # Default config directory
 configdir="${XDG_CONFIG_HOME:-$HOME/.config}/redyt"
-
 # Create .config/redyt if it does not exist to prevent
 # the program from not functioning properly
 [ ! -d "$configdir" ] && echo "Directory $configdir does not exist, creating..." && mkdir -p "$configdir"
@@ -25,7 +24,9 @@ defaultsub="linuxmemes"
 # If no argument is passed
 if [ -z "$1" ]; then
 	# Ask the user to enter a subreddit
-	subreddit=$(dmenu -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
+	# reddit colors
+	colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
+	subreddit=$(dmenu $colors -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
 
 	# If no subreddit was chosen, exit
 	[ -z "$subreddit" ] && exit 1
@@ -41,10 +42,6 @@ cachedir="/tmp/redyt"
 
 # If cachedir does not exist, create it
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-#if [ ! -d "$cachedir" ]; then
-##	echo "$cachedir does not exist, creating..."
-#	mkdir -p "$cachedir"
-#fi
 
 # Limit the maximum number of requests to make
 limit=100
@@ -63,14 +60,15 @@ imgs=$(jq '.' < "$cachedir/tmp.json" | grep url_overridden_by_dest | grep -Eo "h
 # If there are no images, exit
 [ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
-# Download images to $cachedir
-wget -P "$cachedir" $imgs
+kill -37 $(pidof dwmblocks)	#task module bar
+# Download images to $cachedir (use task spooler)
+ts -nf wget -P "$cachedir" $imgs
 
 # Send a notification
 $notifier  "Redyt" "👍 Download Finished⌛, Enjoy! 😊"
 
 # Display the images
-sxiv -abp -s f "$cachedir"/*.png "$cachedir"/*.jpg
+sxiv -abp -s f "$cachedir"/*
 
 # Once finished, remove all of the cached images
 rm "${cachedir:?}"/*
