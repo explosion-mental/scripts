@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 readonly ID_PREVIEW="preview"
 
-#
 # I removed the inc and dec functions and pdf page variable,
 # if you want to take a look at the second page better off opening
 # zathura because it takes long and its buggy
@@ -19,14 +18,14 @@ PLAY_GIF="yes"
 PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
 PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
 PDF_FILE=""
-# cache on home dir scructure so it keeps after boots?
+# cache on home dir scructure so it keeps after boots?(if you dont have the same images consistently then uncomment the tmp one
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg"
 #cachedir="/tmp/vifmimg"
 
 # Initialize the variable and required files
 [ -f "$PDF_FILE_CONFIG" ] && PDF_FILE=$(cat "$PDF_FILE_CONFIG") || touch "$PDF_FILE_CONFIG"
 
-# Create temporary working directory if the directory structure doesn't exist
+# Create temporary(now in cache) working directory if the directory structure doesn't exist
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 
 previewclear() {
@@ -70,15 +69,12 @@ previewaudio() { # Do i need this?
   declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
                      [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
                      [path]="$cachedir/$6.png") \
-    > "$FIFO_UEBERZUG"
+		     > "$FIFO_UEBERZUG"
 }
 
 previewfont() { # what is this one?
-#  if [[ ! -f "/tmp${PWD}/$6.png" ]]; then
-#    fontpreview -i "$6" -o "/tmp${PWD}/$6.png"
-#  fi
 [ ! -f "$cachedir/$6.png" ] && fontpreview -i "$6" -o "$cachedir/$6.png"
-  declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
+declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
                      [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
                      [path]="$cachedir/$6.png") \
 			> "$FIFO_UEBERZUG"
@@ -86,6 +82,7 @@ previewfont() { # what is this one?
 
 previewgif() {
 [ ! -d "$cachedir/$6/" ] && mkdir -p "$cachedir/$6/" ; convert -coalesce "$PWD/$6" "$cachedir/$6/$6.png"
+					# use find?
 [ -n "$PLAY_GIF" ] && for frame in $(ls -1 $cachedir/$6/$6*.png | sort -V); do
         declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
 			[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
@@ -101,39 +98,47 @@ previewgif() {
                 	[path]="$cachedir/$6/$6-0.png") \
                 	> "$FIFO_UEBERZUG"
 }
+#
+# Okay you have to choose between png or jpg funtions
+#
+previewpdf() { #jpg ("faster")
+[ ! "$6" == "$PDF_FILE" ] && rm -f "$cachedir/$6"
 
-previewpdf() {
-	# Should it convert the pdf-file to jpg or png? (jpg is faster!)
-	# PDF_PATH: The temporary path where the image is saved
-	if [ "$7" == "png" ]; then
-		PDF_TYPE="png"
-		PDF_PATH="$cachedir/$6.png"
-	else
-		PDF_TYPE="jpg"
-		PDF_PATH="$cachedir/$6"
-	fi
-# Let's just make it if the 7th arg exist (in case you want png for some reason)
-##[ -n "$7" ] &&
-##	PDF_TYPE="jpg"
-##	PDF_PATH="$cachedir/$6"
-##
-##[ -z "$7" ] &&
-##	PDF_TYPE="png"
-##	PDF_PATH="$cachedir/$6.png"
-##
-[ ! "$6" == "$PDF_FILE" ] && rm -f "${PDF_PATH:?}"
+[ ! -f "$cachedir/$6.jpg" ] && pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$cachedir/$6"
 
-[ ! -f "$PDF_PATH.$PDF_TYPE" ] &&
-	[ $PDF_TYPE == "jpg" ] &&
-	pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$PDF_PATH"
-
+# instead of file why not variables?...
 echo "$6" > "$PDF_FILE_CONFIG"
 
 declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
         	[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-		[path]="$PDF_PATH.$PDF_TYPE") \
+		[path]="$cachedir/$6.jpg") \
         	> "$FIFO_UEBERZUG"
 }
+
+#previewpdf() { #png (fatter)
+#	# Should it convert the pdf-file to jpg or png? (jpg is faster!)
+#	# PDF_PATH: The temporary path where the image is saved
+#	if [ "$7" == "png" ]; then
+#		PDF_TYPE="png"
+#		PDF_PATH="$cachedir/$6.png"
+#	else
+#		PDF_TYPE="jpg"
+#		PDF_PATH="$cachedir/$6"
+#	fi
+#
+#[ ! "$6" == "$PDF_FILE" ] && rm -f "${cachedir:?}"/$6
+#
+#[ ! -f "$PDF_PATH.$PDF_TYPE" ] &&
+#	[ $PDF_TYPE == "jpg" ] &&
+#	pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$PDF_PATH"
+#
+#echo "$6" > "$PDF_FILE_CONFIG"
+#
+#declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
+#        	[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
+#		[path]="$PDF_PATH.$PDF_TYPE") \
+#        	> "$FIFO_UEBERZUG"
+#}
 
 previewmagick() { #is this one faster then normal?, maybe just lowering the resolution??
 [ ! -f "$cachedir/$6.png" ] && convert -thumbnail "$(identify -format "%wx%h" "$6")" "$PWD/$6" "$cachedir/$6.png"
