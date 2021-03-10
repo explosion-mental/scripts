@@ -16,7 +16,6 @@ PLAY_GIF="yes"
 # This however, requires more CPU and therefore affects the overall performance.
 # I think that doen't work, if it does its really the same for me
 PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
-PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
 PDF_FILE=""
 # cache on home dir scructure so it keeps after boots?(if you dont have the same images consistently then uncomment the tmp one
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg"
@@ -83,14 +82,15 @@ declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
 previewgif() {
 [ ! -d "$cachedir/$6/" ] && mkdir -p "$cachedir/$6/" ; convert -coalesce "$PWD/$6" "$cachedir/$6/$6.png"
 					# use find?
-[ -n "$PLAY_GIF" ] && for frame in $(ls -1 $cachedir/$6/$6*.png | sort -V); do
-        declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
+[ -n "$PLAY_GIF" ] &&
+	for frame in $(ls -1 $cachedir/$6/$6*.png | sort -V); do
+        	declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
 			[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
 			[path]="$frame") \
 			> "$FIFO_UEBERZUG"
             # Sleep between frames to make the animation smooth.
 	    # Make it infinite loop on gif?
-            sleep .07
+        		sleep .07
         done
 #  if you commented out then just view
 [ -z "$PLAY_GIF" ] && declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
