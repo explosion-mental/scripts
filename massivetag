@@ -6,9 +6,7 @@
 
 #Prompts
 echo "Enter the album title:"; read -r booktitle
-
-echo "Enter the artist/author:"; read -r author
-
+echo "Enter the artist:"; read -r author
 echo "Enter the publication year:"; read -r year
 
 # List of all songs on a directory
@@ -18,11 +16,13 @@ while read -r song;
 do
 	file="$1"/"$song"
 	echo "Tagging... $song"
+	#echo "$song✅"
 	title="$song"
-	# If you have Luke's `tag` script you do need to add a track number, else it will prompt (I don't need that so I "patched" it)
+# If you have Luke's `tag` script you do need to add a track number, else it will prompt (I don't need that so I "patched" it)
 	tag -a "$author" -A "$booktitle" -t "$title" -d "$year" "$file"
 done < songs.txt && rm songs.txt
 
 # Rename the directory to the album name
 escbook="$(echo "$booktitle" | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")"
+# If the name is the same as the recommenden one then dont rename it??
 mv "$1" "$escbook"
