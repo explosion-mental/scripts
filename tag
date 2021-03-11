@@ -32,7 +32,8 @@ file="$1"
 
 [ ! -f "$file" ] && echo "Provide file to tag." && err
 
-[ -z "$title" ] && echo "Enter a title." && read -r title
+#[ -z "$title" ] && echo "Enter a title." && read -r title
+[ -z "$title" ] && title=""
 [ -z "$artist" ] && echo "Enter an artist." && read -r artist
 [ -z "$album" ] && echo "Enter an album." && read -r album
 #[ -z "$track" ] && echo "Enter a track number." && read -r track
