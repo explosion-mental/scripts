@@ -35,7 +35,8 @@ file="$1"
 [ -z "$title" ] && echo "Enter a title." && read -r title
 [ -z "$artist" ] && echo "Enter an artist." && read -r artist
 [ -z "$album" ] && echo "Enter an album." && read -r album
-[ -z "$track" ] && echo "Enter a track number." && read -r track
+#[ -z "$track" ] && echo "Enter a track number." && read -r track
+[ -z "$track" ] && track=""
 
 case "$file" in
 	*.ogg) echo "Title=$title
