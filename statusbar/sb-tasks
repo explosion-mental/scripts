@@ -10,11 +10,11 @@ tspout="$(ts -l)"
 # Handle mouse clicks
 case $BLOCK_BUTTON in
 	1) echo "$tspout" > "${XDG_CACHE_HOME:-$HOME/.cache}/tspout"
-		setsid -f "$TERMINAL" -e less "${XDG_CACHE_HOME:-$HOME/.cache}/tspout" ;;
-	2) ts -C ;; # Middle click
+	setsid -f "$TERMINAL" -e less "${XDG_CACHE_HOME:-$HOME/.cache}/tspout"	;;
+	2) ts -C	;; # Middle click
 	3) notify-send "Tasks module" "🤖: number of running/queued background tasks
 - Left click opens tsp
-- Middle click cleans tsp" ;; # Right click
+- Middle click cleans tsp"	;; # Right click
 	4) $TERMINAL -e $EDITOR "$0" ;;
 esac
 
