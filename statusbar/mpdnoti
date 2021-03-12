@@ -9,8 +9,8 @@ expireTime="3300"
 
 mpd_sndcommmand() {
 	# $1 command
-	exec 5<> $MPD_TCP 2>/dev/null
-	[[ $? -gt 0 ]] && return 1
+	! exec 5<> $MPD_TCP 2>/dev/null && return 1
+#	[[ $? -gt 0 ]] && return 1
 	echo "$1" >&5
 	echo "close" >&5
 	tmp=$(cat <&5)
@@ -20,8 +20,8 @@ mpd_sndcommmand() {
 }
 
 mpd_getinfo() {
-	mpd_sndcommmand currentsong
-	[[ $? -gt 0 ]] && return 1
+	! mpd_sndcommmand currentsong && return 1
+	#[[ $? -gt 0 ]] && return 1
 	_tmp=$_ret
 	mpdTitle=$(grep "^Title: " <<< "$_tmp" 2>/dev/null | sed "s/Title: //")
 	mpdArtist=$(grep "^Artist: " <<< "$_tmp" 2>/dev/null | sed "s/Artist: //")
