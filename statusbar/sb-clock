@@ -18,11 +18,13 @@ case "$clock" in
 	"12") icon="🕛" ;;
 esac
 
+expireTime=3000
+appoint="$(calcurse -d5 --output-datefmt '%A')"
 case $BLOCK_BUTTON in
-	1) notify-send "This Month" "$(cal --color=always | sed "s/..7m/<b><span color=\"red\">/;s/..27m/<\/span><\/b>/")" && var="$(calcurse -d3)" && [ ${#var} -gt 0 ] && notify-send "Appointments" "$(calcurse -d3)" ;;
+	1) notify-send --expire-time=$expireTime "This Month" "$(cal --color=always | sed "s/..7m/<b><span color=\"red\">/;s/..27m/<\/span><\/b>/")" && [ ${#appoint} -gt 0 ] && notify-send --expire-time=$expireTime "Appointments" "$appoint" ;;
 	2) setsid -f "$TERMINAL" -e calcurse ;;
-	3) notify-send "📅 Time/date module" "\- Left click to show upcoming appointments for the next three days via \`calcurse -d3\` (only if there are any) and show the month via \`cal\`
-#- Middle click opens calcurse if installed" ;;
+	3) notify-send "📅 Time/date module" "\- Left click to show upcoming appointments for the next three days (if there are any) and the month.
+- Middle click opens calcurse if installed" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 #echo `date +"Chefsito🐹 says: 📅%Y %b %d (%a) $icon%I:%M%p"`

@@ -4,8 +4,8 @@
 if [ "$MPD_HOST" ]; then HOST="$MPD_HOST"; else HOST="localhost"; fi
 if [ "$MPD_PORT" ]; then PORT="$MPD_PORT"; else PORT="6600"; fi
 MPD_TCP="/dev/tcp/$HOST/$PORT"
-coverDir="$HOME/.local/share/covers"
-expireTime="3300"
+coverDir=$HOME/.local/share/covers
+expireTime=3300
 
 mpd_sndcommmand() {
 	# $1 command

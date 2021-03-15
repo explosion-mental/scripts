@@ -22,19 +22,18 @@ case $BLOCK_BUTTON in
 	1) setsid -f "$TERMINAL" -t Weather -e less -S "$weatherreport" ;;
 	2) notify-send "🌄Updating forecast..." && getforecast && showweather ;;
 	3) notify-send --expire-time=3000 "🌈 Weather module" "\<b>$(showweather)</b>
-- ☔: Chance of rain/snow
-- 🥶: Daily low
-- 🌞: Daily high
-<i>- Left click for full forecast.</i>
-<i>- Middle click to update forecast.</i>" ;;
-
+	- ☔: Chance of rain/snow
+	- 🥶: Daily low
+	- 🌞: Daily high
+	<i>- Left click for full forecast.</i>
+	<i>- Middle click to update forecast.</i>" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 #
 # The test if our forcecast is updated to the day. If it isn't download a new
 # weather report from wttr.in with the above function.
-[ "$(stat -c %y "$weatherreport" 2>/dev/null | cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ] ||
-	getforecast
+[ "$(stat -c %y "$weatherreport" 2>/dev/null | cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ] || getforecast
+# Simple output, emoji and celsius
 module=$(ts -nf curl "wttr.in/$LOCATION?format=3" | awk '{printf $3; printf $4}')
 echo "$module"
 #showweather
