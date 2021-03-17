@@ -16,8 +16,7 @@ alias xs="xsel -p -l /tmp/.xsel"
 
 #[ -z "$feed" ] && exit
 case "$(printf "Copy URL\\nsxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nw3m\\nvim\\nmpv\\nmpv loop\\nmpv float\\nqueue download\\nqueue yt-dl\\nqueue yt-dl audio\\nFirefox\\nSurf" | dmenu -i -p "Open it with?")" in
-#	"copy url") echo "$feed" | xclip -selection clipboard ;;
-	"copy url") echo "$feed" | xs ;;
+	"copy url") echo "$feed" | xclip -selection clipboard ;;
 	mpv) setsid -f mpv -quiet --no-video "$feed" >/dev/null 2>&1 ;;
 	"mpv loop") setsid -f mpv -quiet --loop "$feed" >/dev/null 2>&1 ;;
 	"mpv float") setsid -f "$TERMINAL" -e mpv --geometry=+0-0 --autofit=30%  --title="mpvfloat" "$feed" >/dev/null 2>&1 ;;
@@ -32,7 +31,5 @@ case "$(printf "Copy URL\\nsxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nw3m\\nvim\\nmpv
 	Surf) setsid -f surf "$feed" >/dev/null 2>&1 ;;
 	w3m) st -e w3m "$1" 2&>/dev/null & disown ;;
 	lynx) st -e lynx "$feed" >/dev/null 2>&1 ;;
-	sxiv) 	curl -sL "$feed" > "$cachedir/$(echo "$feed")" && sxiv -abp -s f "$cachedir/$(echo "$feed")"  >/dev/null 2>&1 && rm "${cachedir:?}"/*
-		;;
-
+	sxiv) 	curl -sL "$feed" > "$cachedir/$(echo "$feed")" && sxiv -abp -s f "$cachedir/$(echo "$feed")"  >/dev/null 2>&1 && rm "${cachedir:?}"/*	;;
 esac

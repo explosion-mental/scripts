@@ -8,8 +8,7 @@ x=$(printf "嗢 vlc\\n📥 Download\\n📋 Clipboard\\n🎧 music\\nyt-dl\\n📔
 case "$x" in
 	"嗢 vlc") notify-send "嗢 VLC Opening..." "📼<i><b>'$2'</b></i>" && vlc "$1" ;;
 	"📥 Download") notify-send "🎼Downloading..." "<u><i>'$2'</i></u>" && youtube-dl --add-metadata -i -x -f bestaudio/best "$1" && notify-send "Done👍" "📼<i><b>'$2'</b></i> has finished dowloading";;
-#	"📋 Clipboard") echo "$1" | tr -d '\n' | xclip -selection clipboard
-	"📋 Clipboard") printf '%s' "$1" | xsel -b -l /tmp/.xsel && notify-send "Clipboard📋" "<b><i>'$1'</i></b> copied" ;;
+	"📋 Clipboard") printf '%s' "$1" | xclip -selection clipboard  && notify-send "Clipboard📋" "<b><i>'$1'</i></b> copied" ;;
 	"🎧 music") st -t Music -e mpv "$1" --no-video & disown ;;
 	"📔PDF") curl -sL "$1" > "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")" && zathura "/tmp/$(echo "$1" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 & ;;
 	" music shuffle") st -t Music -e mpv "$1" --no-video --shuffle & disown ;;
