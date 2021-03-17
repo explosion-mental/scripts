@@ -1,5 +1,8 @@
 #!/bin/bash
 
+: "${CM_LAUNCHER=dmenu}"
+: "${CM_DIR="${XDG_RUNTIME_DIR-"${TMPDIR-/tmp}"}"}"
+: "${CM_HISTLENGTH=8}"
 LC_COLLATE=C
 LOGDIR="/tmp"
 LOGFILE="$LOGDIR/clipmenu.log"
@@ -40,6 +43,7 @@ first_selection() {
 dmenu_options() {
   declare -A selections
   ordered_selections=()
+ # [[ "$CM_LAUNCHER" == rofi ]] && set -- -dmenu "$@"
 
   files=("$CACHE_DIR/"*)
 
@@ -65,165 +69,36 @@ dmenu_options() {
     fi
   done
 
+    #chosen_line=$(list_clips | "$CM_LAUNCHER" "${launcher_args[@]}" "$@")
+launcher_args=(-l "${CM_HISTLENGTH}")
   chosen_line=$(
-    printf '%s\n' "${ordered_selections[@]}" | dmenu -l 15 #-p $P $FN $NB $NF $SB $SF "$@"
+    #printf '%s\n' "${ordered_selections[@]}" | dmenu -l 15 #-p $P $FN $NB $NF $SB $SF "$@"
+    printf '%s\n' "${ordered_selections[@]}" | "$CM_LAUNCHER" "${launcher_args[@]}" "$@"
   )
 
   echo ${selections[$chosen_line]}
 }
 
 
+if [[ $1 == --help ]] || [[ $1 == -h ]]; then
+    cat << 'EOF'
+clipmenu is a simple clipboard manager using dmenu and xsel. Launch this
+when you want to select a clip.
 
-usage() {
-    echo "Usage: clipmenu [OPTION]"
-    echo "Dmenu powered clipboard manager for Linux systems."
-    echo "Run without any flags to try to access the daemon and copying history."
-    echo ""
-    echo "  -c, --current         Returns the most recently copied/cut item in the clipboard"
-    echo "  -C, --copy            Copies argument to clipboard"
-    echo "  -d, --daemon          Start the clipmenu daemon"
-    echo "  -D, --delete          Delete clipboard entry"
-    echo "  -fn [font]            Defines the font or font set used for dmenu."
-    echo "                          eg. \"fixed\" or \"Monospace-12:normal\" (an xft font)"
-    echo "  -h, --help            Print this help guide and exit"
-    echo "  -K, --kill-daemon     Stop the clipmenu daemon"
-    echo "  -nb [color]           Defines the normal background color for dmenu."
-    echo "                          #RGB, #RRGGBB, and X color names are supported"
-    echo "  -nf [color]           Defines the normal foreground color for dmenu"
-    echo "  -s, --daemon-status   Stop the clipmenu daemon"
-    echo "  -sb [color]           Defines the selected background color for dmenu"
-    echo "  -sf [color]           Defines the selected foreground color for dmenu"
+All arguments are passed through to dmenu itself.
+
+Environment variables:
+
+- $CM_DIR: specify the base directory to store the cache dir in (default: $XDG_RUNTIME_DIR, $TMPDIR, or /tmp)
+- $CM_HISTLENGTH: specify the number of lines to show in dmenu/rofi (default: 8)
+- $CM_LAUNCHER: specify a dmenu-compatible launcher (default: dmenu)
+- $CM_OUTPUT_CLIP: if set, output clip selection to stdout
+EOF
     exit 0
-}
-
-
-check_arguments() {
-    while test $# -gt 0; do
-      case "$1" in
-        -h|--help)
-          usage
-          ;;
-        -c|--current)
-          if type -p xsel >/dev/null 2>&1; then
-    	echo $(xsel --clipboard)
-          else
-    	echo $(xclip -o -sel clipboard)
-          fi
-          exit 0
-          ;;
-        -C|--copy)
-          shift
-          if type -p xsel >/dev/null 2>&1; then
-    	echo "$1" | xsel -i --clipboard
-          else
-    	echo "$1" | xclip -sel clipboard
-          fi
-          exit 0
-          ;;
-        -d|--daemon)
-          if
-	[[ $(ps -A | grep clipmenu-d) == *[^[:blank:]]* ]]
-          then
-    	echo "Daemon already running."
-    	exit 0
-          else
-    	clipmenu-d >> $LOGFILE 2>&1 &
-
-    	if
-	[[ $(ps -A | grep clipmenu-d) == *[^[:blank:]]* ]]
-    	then
-    	  echo "Daemon started."
-    	  exit 0
-    	else
-    	  echo "Unknown error occurred; daemon did not start."
-    	  exit 1
-    	fi
-          fi
-          ;;
-        -D|--delete)
-          fs=$(first_selection)
-          P="DELETION"
-          chosen_file=$(dmenu_options)
-
-          rm "$chosen_file"
-
-          if
-    	[ "$chosen_file" == "$fs" ]
-          then
-    	fs=$(first_selection)
-
-    	if type -p xsel >/dev/null 2>&1; then
-    	  xsel -i --clipboard < "$fs"
-    	else
-    	  xclip -sel clipboard < "$fs"
-    	fi
-    	rm "$fs"
-          fi
-          exit 0
-          ;;
-        -K|--kill-daemon)
-          if
-    	[[ `ps -A | grep clipmenu-d` == *[^[:blank:]]* ]]
-          then
-    	kill `ps -A | grep clipmenu-d | awk '{print $1;}'`
-    	echo "Daemon stopped."
-    	exit 0
-          else
-    	echo "No daemon running."
-    	exit 0
-          fi
-          ;;
-        -s|--daemon-status)
-          if
-    	[[ `ps -A | grep clipmenu-d` == *[^[:blank:]]* ]]
-          then
-    	echo "Daemon running."
-    	exit 0
-          else
-    	echo "No daemon running."
-    	exit 0
-          fi
-          ;;
-        -fn)
-          shift
-          FN="-fn $1"
-          shift
-          ;;
-        -nb)
-          shift
-          NB="-nb $1"
-          shift
-          ;;
-        -nf)
-          shift
-          NF="-nf $1"
-          shift
-          ;;
-        -sb)
-          shift
-          SB="-sb $1"
-          shift
-          ;;
-        -sf)
-          shift
-          SF="-sf $1"
-          shift
-          ;;
-        *)
-          echo "clipmenu should take no arguments other than accepted flags and accepted
-arguements to said flags. Either invalid flags or a disproportionate number of
-arguments-to-flags were used."
-          exit 1
-          ;;
-      esac
-    done
-}
-
-check_arguments "$@"
-
+fi
 
 if
-  [[ ! `ps -A | grep clipmenu-d` == *[^[:blank:]]* ]]
+	[[ ! $(ps -A | grep clipmenu-d) == *[^[:blank:]]* ]]
 then
   echo "Daemon not running; run \"clipmenu -d\" or \"clipmenu --daemon\" to correct this."
   exit 1
