@@ -24,6 +24,7 @@ lock_timeout=2
 has_xdotool=0
 
 #_xsel() { timeout 1 xsel --logfile /dev/null "$@"; }
+_xclip() { timeout 1 xclip "$@"; }
 
 error() { printf 'ERROR: %s\n' "${1?}" >&2; }
 info() { printf 'INFO: %s\n' "${1?}"; }
@@ -72,8 +73,7 @@ sig_enable() {
     # clipboard if it wasn't changed
     for selection in "${selections[@]}"; do
         #data=$(_xsel -o --"$selection"; printf x)
-        #data=$(echo "$selection" | timeout 1 xclip -o -sel clipboard; printf x)
-        data=$(timeout 1 xclip -o -sel "$selection"; printf x)
+        data=$(_xclip -o -sel "$selection"; printf x)
         last_data_sel[$selection]=${data%x}
     done
 
@@ -172,7 +172,8 @@ while true; do
     fi
 
     for selection in "${selections[@]}"; do
-        data=$(timeout 1 xclip -o -sel "$selections"; printf x)
+	    data=$(_xclip -o -sel "$selection"; printf x)
+        #data=$(timeout 1 xclip -o -sel "$selection"; printf x)
         #data=$(_xsel -o --"$selection"; printf x)
         data=${data%x}  # avoid trailing newlines being stripped
 
@@ -205,8 +206,7 @@ while true; do
 
         if (( CM_OWN_CLIPBOARD )) && [[ $selection == clipboard ]]; then
             # Only clipboard, since apps like urxvt will unhilight for PRIMARY
-            timeout 1 xclip -o -sel clipboard | timeout 1 xclip -i -sel clipboard
-            timeout 1 xclip -o -sel clipboard | timeout 1 xclip -i -sel clipboard
+	    _xclip -o -sel clipboard | _xclip -i -sel clipboard
             #_xsel -o --clipboard | _xsel -i --clipboard
         fi
     done
