@@ -1,84 +1,15 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 : "${CM_LAUNCHER=dmenu}"
 : "${CM_DIR="${XDG_RUNTIME_DIR-"${TMPDIR-/tmp}"}"}"
 : "${CM_HISTLENGTH=8}"
-LC_COLLATE=C
-LOGDIR="/tmp"
-LOGFILE="$LOGDIR/clipmenu.log"
-CACHE_DIR="$HOME/.local/share/clipmenu"
-P="clipmenu"
 
-first_selection() {
-  declare -A selections
-  ordered_selections=()
+major_version=6
 
-  files=("$CACHE_DIR/"*)
+shopt -s nullglob
 
-  for (( i=${#files[@]}-1; i>=0; i-- )); do
-    file=${files[$i]}
-
-    first_line=$(sed -n '/./{p;q}' "$file")
-
-    lines=$(wc -l "$file")
-    lines=${lines%% *}
-
-    if (( lines > 1 )); then
-      first_line+=" ($lines lines)"
-    fi
-
-    if
-      [ -z "$first_line" ]
-    then
-      rm $file
-    else
-      ordered_selections+=("$first_line")
-      selections[$first_line]=$file
-    fi
-  done
-
-  echo "${selections[${ordered_selections[0]}]}"
-}
-
-dmenu_options() {
-  declare -A selections
-  ordered_selections=()
- # [[ "$CM_LAUNCHER" == rofi ]] && set -- -dmenu "$@"
-
-  files=("$CACHE_DIR/"*)
-
-  for (( i=${#files[@]}-1; i>=0; i-- )); do
-    file=${files[$i]}
-
-    first_line=$(sed -n '/./{p;q}' "$file")
-
-    lines=$(wc -l "$file")
-    lines=${lines%% *}
-
-    if (( lines > 1 )); then
-      first_line+=" ($lines lines)"
-    fi
-
-    if
-      [ -z "$first_line" ]
-    then
-      rm $file
-    else
-      ordered_selections+=("$first_line")
-      selections[$first_line]=$file
-    fi
-  done
-
-    #chosen_line=$(list_clips | "$CM_LAUNCHER" "${launcher_args[@]}" "$@")
-launcher_args=(-l "${CM_HISTLENGTH}")
-  chosen_line=$(
-    #printf '%s\n' "${ordered_selections[@]}" | dmenu -l 15 #-p $P $FN $NB $NF $SB $SF "$@"
-    printf '%s\n' "${ordered_selections[@]}" | "$CM_LAUNCHER" "${launcher_args[@]}" "$@"
-  )
-
-  echo ${selections[$chosen_line]}
-}
-
+cache_dir=$CM_DIR/clipmenu.$major_version.$USER
+cache_file=$cache_dir/line_cache
 
 if [[ $1 == --help ]] || [[ $1 == -h ]]; then
     cat << 'EOF'
@@ -97,32 +28,41 @@ EOF
     exit 0
 fi
 
-if
-	[[ ! $(ps -A | grep clipmenu-d) == *[^[:blank:]]* ]]
-then
-  echo "Daemon not running; run \"clipmenu -d\" or \"clipmenu --daemon\" to correct this."
-  exit 1
+
+# Blacklist of non-dmenu launchers
+launcher_args=(-l "${CM_HISTLENGTH}")
+if [[ "$CM_LAUNCHER" == fzf ]]; then
+    launcher_args=()
 fi
 
+# rofi supports dmenu-like arguments through the -dmenu flag
+[[ "$CM_LAUNCHER" == rofi ]] && set -- -dmenu "$@"
 
+list_clips() {
+    LC_ALL=C sort -rnk 1 < "$cache_file" | cut -d' ' -f2- | awk '!seen[$0]++'
+}
 
-chosen_file=$(dmenu_options)
-[[ $chosen_file ]] || exit 1
-
-if type -p xsel >/dev/null 2>&1; then
-  data=$(xsel --clipboard; printf x)
+if [[ "$CM_LAUNCHER" == rofi-script ]]; then
+    if (( $# )); then
+        chosen_line="${!#}"
+    else
+        list_clips
+        exit
+    fi
 else
-  data=$(xclip -o -sel clipboard; printf x)
+    chosen_line=$(list_clips | "$CM_LAUNCHER" "${launcher_args[@]}" "$@")
 fi
 
-if
-  [ "${data%x}" != "`cat $chosen_file`" ]
-then
-  if type -p xsel >/dev/null 2>&1; then
-    xsel -i --clipboard < "$chosen_file"
-  else
-    xclip -sel clipboard < "$chosen_file"
-  fi
+[[ $chosen_line ]] || exit 1
+file=$cache_dir/$(cksum <<< "$chosen_line")
+[[ -f "$file" ]] || exit 2
 
-  rm "$chosen_file"
+for selection in clipboard primary; do
+	xclip -sel "$selection" < "$file"
+	#echo "$selection" | xclip -selection clipboard < "$file"
+    #xsel --logfile /dev/null -i --"$selection" < "$file"
+done
+
+if (( CM_OUTPUT_CLIP )); then
+    cat "$file"
 fi
