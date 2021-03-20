@@ -1,18 +1,11 @@
 #!/bin/sh
 
-cachedir="/tmp/rss"
-
 # If cachedir does not exist, create it
-if [ ! -d "$cachedir" ]; then
-#	notify-send "$cachedir does not exist, creating..."
-	mkdir -p "$cachedir"
-fi
-
+cachedir=/tmp/rss
+[ ! -d "$cachedir" ] && mkdir -p $cachedir
 # Feed this script a link and it will give dmenu
 # some choice programs to use to open it.
-feed="${1:-$(printf "%s" | dmenu -p 'Paste URL or file path')}"
-
-alias xs="xsel -p -l /tmp/.xsel"
+feed="${1:-$(printf '%s' | dmenu -p 'Paste URL or file path')}"
 
 #[ -z "$feed" ] && exit
 case "$(printf "Copy URL\\nsxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nw3m\\nvim\\nmpv\\nmpv loop\\nmpv float\\nqueue download\\nqueue yt-dl\\nqueue yt-dl audio\\nFirefox\\nSurf" | dmenu -i -p "Open it with?")" in
@@ -26,10 +19,10 @@ case "$(printf "Copy URL\\nsxiv\\nsetbg\\nPDF\\nbrowser\\nlynx\\nw3m\\nvim\\nmpv
 	PDF) curl -sL "$feed" > "/tmp/$(echo "$feed" | sed "s/.*\///;s/%20/ /g")" && zathura "/tmp/$(echo "$feed" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 ;;
 	vim) curl -sL "$feed" > "/tmp/$(echo "$feed" | sed "s/.*\///;s/%20/ /g")" && setsid -f "$TERMINAL" -e "$EDITOR" "/tmp/$(echo "$feed" | sed "s/.*\///;s/%20/ /g")"  >/dev/null 2>&1 ;;
 	setbg) curl -L "$feed" > $XDG_CACHE_HOME/pic ; xwallpaper --zoom $XDG_CACHE_HOME/pic >/dev/null 2>&1 ;;
-	browser) setsid -f $BROWSER "$feed" >/dev/null 2>&1 ;;
+	browser) setsid -f "$BROWSER" "$feed" >/dev/null 2>&1 ;;
 	Firefox) firefox "$feed" >/dev/null 2>&1 ;;
 	Surf) setsid -f surf "$feed" >/dev/null 2>&1 ;;
 	w3m) st -e w3m "$1" 2&>/dev/null & disown ;;
 	lynx) st -e lynx "$feed" >/dev/null 2>&1 ;;
-	sxiv) 	curl -sL "$feed" > "$cachedir/$(echo "$feed")" && sxiv -abp -s f "$cachedir/$(echo "$feed")"  >/dev/null 2>&1 && rm "${cachedir:?}"/*	;;
+	sxiv) 	curl -sL "$feed" > "$cachedir"/"$feed" && sxiv -abp -s f "$cachedir"/"$feed" >/dev/null 2>&1 && rm "${cachedir:?}"/*	;;
 esac
