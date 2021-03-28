@@ -1,26 +1,22 @@
 #!/bin/sh
 
-# Requires Luke Smith tag wrapper script.
+# Requires Luke Smith tag wrapper script with some tweak.
 
 [ ! -d "$1" ] && printf "Please add a directory to tagg.\\n" && exit
 
 #Prompts
-echo "Enter the album title:"; read -r booktitle
+echo "Enter the album title:"; read -r album
 echo "Enter the artist:"; read -r author
 echo "Enter the publication year:"; read -r year
 
 # List of all songs on a directory
 find "$1" -maxdepth 1 -type f -printf '%f\n' > songs.txt
 while read -r song;
-#for f in songs;
 do
 	file="$1"/"$song"
-	echo "Tagging... $song"
-	#echo "$song✅"
-	#title="$song"
-# If you have Luke's `tag` script you do need to add a track number, else it will prompt (I don't need that so I "patched" it)
-	tag -a "$author" -A "$booktitle" -d "$year" "$file"
-	#tag -a "$author" -A "$booktitle" -t "$title" -d "$year" "$file"
+	# Use the name of the file as the title
+	title="$(noextname "$song")"
+	tag -a "$author" -A "$booktitle" -t "$title" -d "$year" "$file" && echo "Tagging... '$song'✔️"
 done < songs.txt && rm songs.txt
 
 # Rename the directory to the album name

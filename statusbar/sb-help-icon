@@ -27,4 +27,5 @@ case $BLOCK_BUTTON in
 - Left click to open LARBS guide.
 - Middle click to refresh window manager." && refresh_modules;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
-esac; echo "🐹"
+esac
+echo "🐹"

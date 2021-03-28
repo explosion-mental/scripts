@@ -1,0 +1,22 @@
+#!/bin/sh
+
+# Get user selection via dmenu from bookmark file
+bmfile="${XDG_CONFIG_HOME:-$HOME/.config}/bookmarks"
+
+if [ -n "$*" ]; then
+	if [ -n "$2" ]; then
+		bmname="$1"
+		bmurl="$2"
+	else
+		bmurl="$1"
+		bmname="$(date +'%d_%m_%I_%M%p')"
+	fi
+fi
+# List only the names of the bookmarks
+#notify-send "$bmname & $bmurl"
+chosen=$(dmenu -i -l 30 < "$bmfile" | awk '{print $3}')
+# Exit if none chosen.
+[ -z "$chosen" ] && exit
+
+#notify-send "$chosen"
+$BROWSER "$chosen" &
