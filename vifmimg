@@ -9,6 +9,7 @@ PLAY_GIF="yes"
 # By enabling this option the script will remove the preview file after it is drawn
 # and by doing so the preview will always be up-to-date with the file.
 # This however, requires more CPU and therefore affects the overall performance.
+# MAYBE CHANGE TO VIEW?
 
 # The messy code below is for moving pages in pdf files in the vifm file preview by
 # utilizing the < and > keys which will be bound to `vifmimg inc` or `vifmimg dec`.

@@ -3,57 +3,43 @@
 menu(){
     printf "1. [URL]   Shorten url✂️\n"
     printf "2. [URL]   Download file📥\n"
-    printf "3. [URL]   Play videos in mpv🎥\n"
-    printf "4. [URL]   Play audio in mpv🎧\n"
-    printf "5. [Image] Save clipbaord image🔖\n"
-    printf "6. [Shell] This will run any shell command🤖\n"
-    printf "7. [URL]   Save as bookmark📑\n"
+    printf "3. [URL]   Download yt audio🎧\n"
+    printf "4. [URL]   Play videos/audio in mpv🤟🎥\n"
+    printf "5. [URL]   Save as bookmark📑\n"
+    printf "6. [Image] Save clipbaord image🔖\n"
+    printf "7. [Shell] Run shell command on st🤖\n"
+}
+spell_failed(){
+notify-send "Error 404🤖"
+exit 1
 }
 
-spell_failed(){
-    notify-send "Failed to cast spell"
-}
-bookmarkfile=${XDG_CONFIG_HOME:-"$HOME/.config"}/bookmarks
-prompt=$(xclip -o -sel clipboard | tr -d '\n')
+# 'c' or 'clipboard'
+prompt=$(xclip -o -sel c | tr -d '\n')
 # Check if clipboard has something
 [ "$prompt" = "" ] && notify-send "Empty clipboard📎" && exit
-[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#????????????????????}"}"..."${prompt#"${prompt%???????}"}" || prompt="$prompt"
+[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}" || prompt="$prompt"
 choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d. -f1)
 cbtext=$(xclip -o -selection clipboard)
-
-
 
 case $choice in
     1)
 	notify-send "Cutting...✂️"
 	output=$(curl -s -F"shorten=$cbtext" 0x0.st)
-	if [ "$output" = "Segmentation Fault" ]; then
-	    spell_failed
-	else
-	    echo "$output" | xclip -sel c
-	    notify-send "Shorten Link is in Clipboard" "$output"
-	fi
-	break
+	[ "$output" = "Segmentation fault" ] && spell_failed
+	echo "$output" | xclip -sel c
+	notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
 	;;
     2)
-	wget -P ~/Downloads $cbtext && notify-send "Downloading File" || spell_failed
-	break
-	;;
+	qndl "$cbtext" || spell_failed	;;
     3)
-	mpv "$cbtext" || spell_failed
-	break
-	;;
+	qndl "$cbtext" 'audio' || spell_failed	;;
     4)
-	mpv "$cbtext" || spell_failed
-	break
-	;;
+	mpv "$cbtext" || spell_failed	;;
     5)
-	file=$(date +"%Y_%m_%d_%I_%M_%p")
-	xclip -selection clipboard -t image/png -o > $HOME/Pictures/Saved/$file.png || spell_failed
-	break
-	;;
+	bookmenu "$cbtext"	;;
     6)
-	$cbtext || spell_failed
-	break
-	;;
+	xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
+    7)
+	st -e "$cbtext" || spell_failed	;;
 esac
