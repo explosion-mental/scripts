@@ -2,20 +2,19 @@
 
 # Displays number of upgradeable packages using xbps-install
 # package manager. Void linux
+# You can change to update on the background by changing the 9 line:
+# 1) sudo xbps-install -Suy && notify-send "Void Updated";;
 
 case $BLOCK_BUTTON in
-	1) setsid -f "$TERMINAL" -e xbps-install -Suv ;;
+	1) setsid -f "$TERMINAL" -e sudo xbps-install -uv ;;
 	2) notify-send "Packages" "$(xbps-install -un | cut -d' ' -f1 | sort | uniq)" ;;
-	#2) notify-send "Packages" "$(xbps-install -un | cut -d' ' -f1 | sort | uniq | xargs)" ;;
 	3) notify-send "🎁 Upgrade module" "📦: number of upgradable packages
 - Left click to upgrade packages
 - Middle click to show upgradable packages" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 
-#pacman -Qu | grep -Fcv "[ignored]" | sed "s/^/📦/;s/^📦0$//g"
-packages=$(xbps-install -un | cut -d' ' -f2 | sort | uniq -c | xargs)
+packages=$(xbps-install -Sun | cut -d' ' -f2 | sort | uniq -c | xargs)
 # -u:	lists all upgreadeable packages
 # -n:	'raw', it shows what it does without doing it?
-
-[ -z "$packages" ] && exit || echo "📦$packages""s"
+[ -z "$packages" ] && echo "" || echo "📦$packages""s"
