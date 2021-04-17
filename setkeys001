@@ -1,9 +1,0 @@
-#!/bin/sh
-setxkbmap -layout us -variant altgr-intl -option nodeadkeys
-# setxkbmap -device 10 -option caps:backspace
-setxkbmap -option caps:backspace
-xset r 66
-xset r rate 300 50
-
-# alt with vimkeys to arrowkeys and more
-[ -f "$HOME/.bash/keys" ] && xmodmap "$HOME/.bash/keys"
