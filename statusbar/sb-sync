@@ -1,0 +1,17 @@
+#!/bin/sh
+
+# Syncthing Little icon🌐
+# Signal 55
+
+case $BLOCK_BUTTON in
+	1) killall syncthing && kill -55 "$(pidof dwmblocks)" ;;
+	2) notify-send "Packages" "$(xbps-install -un | cut -d' ' -f1 | sort | uniq)" ;;
+	#2) notify-send "Packages" "$(xbps-install -un | cut -d' ' -f1 | sort | uniq | xargs)" ;;
+	3) notify-send "🌐 Syncthing module" "\-Shows 🌐 if syncthing is running.
+- Left click to kill syncthing
+- Middle click to show upgradable packages" ;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+
+[ -n "$(pidof syncthing)" ] && echo "🌐" || echo ""
+#[ "$(pidof synthing)" -gt 0 ] && echo "🌐" || echo ""
