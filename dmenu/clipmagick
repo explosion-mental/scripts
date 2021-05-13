@@ -1,13 +1,15 @@
 #!/bin/sh
 
 menu(){
-    printf "1. [URL]   Shorten url✂️\n"
-    printf "2. [URL]   Download file📥\n"
-    printf "3. [URL]   Download yt audio🎧\n"
-    printf "4. [URL]   Play videos/audio in mpv🤟🎥\n"
-    printf "5. [URL]   Save as bookmark📑\n"
-    printf "6. [Image] Save clipbaord image🔖\n"
-    printf "7. [Shell] Run shell command on st🤖\n"
+    printf "1. [URL]   Save as bookmark📑\n"
+    printf "2. [URL]   Open on Browser🦊\n"
+    printf "3. [URL]   Download file📥\n"
+    printf "4. [URL]   Download yt audio🎧\n"
+    printf "5. [URL]   Shorten url✂️\n"
+    printf "6. [URL]   Play videos/audio in mpv🤟🎥\n"
+    printf "7. [Image] Save clipbaord image🔖\n"
+    printf "8. [Shell] Run shell command on st🤖\n"
+    printf "9. [GOD]   Save godwords on your clipboard\n"
 }
 spell_failed(){
 notify-send "Error 404🤖"
@@ -24,22 +26,26 @@ cbtext=$(xclip -o -selection clipboard)
 
 case $choice in
     1)
-	notify-send "Cutting...✂️"
-	output=$(curl -s -F"shorten=$cbtext" 0x0.st)
-	[ "$output" = "Segmentation fault" ] && spell_failed
-	echo "$output" | xclip -sel c
-	notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
-	;;
+        bookmenu "$cbtext"	;;
     2)
-	qndl "$cbtext" || spell_failed	;;
+        $BROWSER "$cbtext" &	;;
     3)
-	qndl "$cbtext" 'audio' || spell_failed	;;
+        qndl "$cbtext" || spell_failed	;;
     4)
-	mpv "$cbtext" || spell_failed	;;
+        qndl "$cbtext" 'audio' || spell_failed	;;
     5)
-	bookmenu "$cbtext"	;;
+        notify-send "Cutting...✂️"
+        output=$(curl -s -F"shorten=$cbtext" 0x0.st)
+        [ "$output" = "Segmentation fault" ] && spell_failed
+        echo "$output" | xclip -sel c &&
+        notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
+        ;;
     6)
-	xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
+        mpv "$cbtext" || spell_failed	;;
     7)
-	st -e "$cbtext" || spell_failed	;;
+        xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
+    8)
+	setsid -f st -e "$cbtext" || spell_failed	;;
+    9)
+	godwords | xclip -sel c	;;
 esac
