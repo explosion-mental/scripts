@@ -1,100 +1,129 @@
-#!/bin/bash
-# dependencies: mpv youtube-dl fzf rofi/dmenu
-# search videos and playlists on youtube and play them in mpv, without an API
-# usage:
-# yt					asks for input in stdin, prompts using fzf
-# yt search query		takes input from the passed arg, prompts using fzf
-# yt -r					takes input and prompts using rofi ($guicmd)
+#!/bin/sh
+
+# dependencies: mpv youtube-dl fzf rofi/dmenu sxiv(not mandatory)
+#for prog in mpv youtube-dl fzf dmenu; do
+#[ ! "$(which "$prog")" ] && echo "Please install $prog!" && exit 1
+#done
+
+# Variables
 defcmd="fzf"
-# guicmd="rofi -dmenu -i" #uncomment next line for dmenu
+#guicmd="rofi -dmenu -i" #uncomment next line for dmenu
 guicmd="dmenu -nb black -nf white -sb #E62117 -sf black -i -l 15"
-# yt colors 🤓
 promptcmd="$defcmd"
-[ -z "$*" ] && echo -n " Search: " && read -r query ||
-	case "$1" in
-		-r) query=$(echo | $guicmd -p "🔎 Search: ")
-			promptcmd="$guicmd -p Video:";;
-		*)  query="$*";;
-	esac
-# if theres "i " on the search ...
-if [ "${query:0:2}" = "i " ]; then
-	query=$(sed \
-	-e 's/^..//'\
-	-e 's|+|%2B|g'\
-	-e 's|#|%23|g'\
-	-e 's|&|%26|g'\
-	-e 's| |+|g'\
-	<<< "$query")
+user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0'
+#user_agent='your bot 0.1'
+cachedir="/tmp/redyt"	#for images and description
+task=tsp
+
+# Help
+help_opt() {
+	printf "Usage:\n"
+	printf "\ttermyt				asks for input in stdin using fzf\n"
+	printf "\ttermyt <search query>		takes input from the passed query using fzf\n"
+	printf "\ttermyt -r			takes input and prompts using dmenu/rofi\n"
+}
+# Handle options
+while getopts ":h :g :r :R" opt; do
+#case "$1" in
+    case $opt in
+	h)
+	help_opt && exit 1	;;
+	r)
+	query=$(echo | $guicmd -p "🔎 Search: ")
+	promptcmd="$guicmd -p Video:"
+	[ -z "$query" ] && exit 1	;;
+	#notifier=notify-send	;;
+	R)
 	status001=1
+	[ "$OPTARG" = "max" ] && res="maxresdefault.jpg"
+	[ "$OPTARG" = "hq"  ] && res="hqdefault.jpg"
+	[ "$OPTARG" = "mid" ] && res="mqdefault.jpg"
+	[ "$OPTARG" = "low" ] && res="sddefault.jpg"	;;
+	#g) #Get description with youtube-dl
+	#description=1
+	#;;
+	?)
+	echo "Error! Invalid option!" && help_opt && exit 1	;;
+	#*)
+	#query="$*"	;;
+    esac
+done
+
+[ -z "$query" ] && if [ -z "$*" ]; then
+	printf '%s' " Search: "
+	read -r query
 else
-# sanitise the query
-query=$(sed \
-	-e 's|+|%2B|g'\
-	-e 's|#|%23|g'\
-	-e 's|&|%26|g'\
-	-e 's| |+|g'\
-	<<< "$query")
-	status001=""
+#[ -z "$*" ] && echo -n " Search: " && read -r query ||
+	query="$*"
+	printf '%s' "Searching..."
 fi
 [ -z "$query" ] && exit
-#fetching () { Function?
-# fetch the results with the $query and
-# delete all escaped characters
-response="$(curl -s "https://www.youtube.com/results?search_query=$query" |\
-	sed 's|\\.||g')"
-# if unable to fetch the youtube results page, inform and exit
-if ! grep -q "script" <<< "$response"; then echo "unable to fetch yt"; exit 1; fi
+
+# sanitise the query
+query=$(echo "$query" | sed \
+	-e 's|+|%2B|g'\
+	-e 's|#|%23|g'\
+	-e 's|&|%26|g'\
+	-e 's| |+|g')
+[ -z "$query" ] && exit
+
+# Why you wanna tell google you use linux?
+response="$(curl "https://www.youtube.com/results" -s -G --user-agent "$user_agent" --data-urlencode "search_query=$query" -H 'authority: www.youtube.com' -H 'accept-language: en-US,en;q=0.9' -L --compressed)"
+
+# if unable to fetch the youtube results page, inform and exit (posix?)
+[ -z "$response" ] && print_error "\033[31mERROR[#02]: Couldn't find data on site.\033[0m\n" && exit 1
+
 # regex expression to match video and playlist entries from yt result page
 vgrep='"videoRenderer":{"videoId":"\K.{11}".+?"text":".+?[^\\](?=")'
 pgrep='"playlistRenderer":{"playlistId":"\K.{34}?","title":{"simpleText":".+?[^\"](?=")'
 # grep the id and title
 # return them in format id (type) title
 getresults() {
-	  grep -oP "$1" <<< "$response" |\
+	printf '%s' "$response" | grep -oP "$1" |\
+	  #grep -oP "$1" <<< "$response"
 		awk -F\" -v p="$2" '{ print $1 "\t" p " " $NF}'
 }
 # get the list of videos/playlists and their ids in videoids and playlistids
 videoids=$(getresults "$vgrep")
 playlistids=$(getresults "$pgrep" "(playlist)")
+
 # if there are playlists or videos, append them to list
 [ -n "$playlistids" ] && ids="$playlistids\n"
 [ -n "$videoids" ] && ids="$ids$videoids"
+
 # url prefix for videos and playlists
 videolink="https://youtu.be/"
 playlink="https://youtube.com/playlist?list="
-#
+
 # OPTIONAL: Display thumbnail on sxiv
-#
-cachedir="/tmp/redyt"
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 img="http://img.youtube.com/vi"
-max="maxresdefault.jpg"
-HQ="hqdefault.jpg"
-mid="mqdefault.jpg"
-low="sddefault.jpg"
 # only one thumbnail, the selected one, before watching the video was the first use of this
 thumb() {
-	curl -sL "$img/$id/$max" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
+	curl -sL "$img/$id/$res" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
 	}
-# all 30 thumbnails
+# 30 thumbnails
 thumball() {
-	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$max," > "$cachedir"/thumb.txt
+	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
 	while read -r URL; do
 		var=$((var + 1))
-		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
-	done < "$cachedir"/thumb.txt
-	notify-send "Finished⌛" && sxiv -bpt -s f "$cachedir"/*.jpg && rm "${cachedir:?}"/*
+	$task -nf curl -L "$URL" > "$cachedir"/"$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
+	done < $cachedir/thumb.txt
+	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/* ; rm "${cachedir:?}"/*
 }
+
 # Making this a function because I will be repeating this
 choose() {
 	clear
 	echo "Choose Video/Playlist to play: "
-	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+	choice=$(printf '%s' "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
 	[ -z "$choice" ] && exit 		# if esc-ed then exit
-	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
+	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 	echo -e "$choice\t($id)"
 }
-# if user wants to view first 30 thumbnails first then...
+
+#[ -n $description ] && youtube-dl "https://www.youtube.com/results?search_query=$query" --get-description >> "$cachedir"/description.TXT && setsid -f "$TERMINAL" -e less "$cachedir"/description.TXT
 [ -z "$status001" ] && choose
 [ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose #&& dmeurl "$videolink$id"
 
@@ -102,7 +131,9 @@ case $id in
 # the 'choice' variable as a second argument is to display it on a notification with dmenurl
 		# 11 digit id = video
 	???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+	#???????????) mpv "$videolink$id" ;;
 		# 34 digit id = playlist
 	??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+	#??????????????????????????????????) mpv "$playlink$id"	;;
 		*) exit ;;
 esac

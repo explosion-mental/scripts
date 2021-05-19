@@ -1,0 +1,108 @@
+#!/bin/bash
+# dependencies: mpv youtube-dl fzf rofi/dmenu
+# search videos and playlists on youtube and play them in mpv, without an API
+# usage:
+# yt					asks for input in stdin, prompts using fzf
+# yt search query		takes input from the passed arg, prompts using fzf
+# yt -r					takes input and prompts using rofi ($guicmd)
+defcmd="fzf"
+# guicmd="rofi -dmenu -i" #uncomment next line for dmenu
+guicmd="dmenu -nb black -nf white -sb #E62117 -sf black -i -l 15"
+# yt colors 🤓
+promptcmd="$defcmd"
+[ -z "$*" ] && echo -n " Search: " && read -r query ||
+	case "$1" in
+		-r) query=$(echo | $guicmd -p "🔎 Search: ")
+			promptcmd="$guicmd -p Video:";;
+		*)  query="$*";;
+	esac
+# if theres "i " on the search ...
+if [ "${query:0:2}" = "i " ]; then
+	query=$(sed \
+	-e 's/^..//'\
+	-e 's|+|%2B|g'\
+	-e 's|#|%23|g'\
+	-e 's|&|%26|g'\
+	-e 's| |+|g'\
+	<<< "$query")
+	status001=1
+else
+# sanitise the query
+query=$(sed \
+	-e 's|+|%2B|g'\
+	-e 's|#|%23|g'\
+	-e 's|&|%26|g'\
+	-e 's| |+|g'\
+	<<< "$query")
+	status001=""
+fi
+[ -z "$query" ] && exit
+#fetching () { Function?
+# fetch the results with the $query and
+# delete all escaped characters
+response="$(curl -s "https://www.youtube.com/results?search_query=$query" |\
+	sed 's|\\.||g')"
+# if unable to fetch the youtube results page, inform and exit
+if ! grep -q "script" <<< "$response"; then echo "unable to fetch yt"; exit 1; fi
+# regex expression to match video and playlist entries from yt result page
+vgrep='"videoRenderer":{"videoId":"\K.{11}".+?"text":".+?[^\\](?=")'
+pgrep='"playlistRenderer":{"playlistId":"\K.{34}?","title":{"simpleText":".+?[^\"](?=")'
+# grep the id and title
+# return them in format id (type) title
+getresults() {
+	  grep -oP "$1" <<< "$response" |\
+		awk -F\" -v p="$2" '{ print $1 "\t" p " " $NF}'
+}
+# get the list of videos/playlists and their ids in videoids and playlistids
+videoids=$(getresults "$vgrep")
+playlistids=$(getresults "$pgrep" "(playlist)")
+# if there are playlists or videos, append them to list
+[ -n "$playlistids" ] && ids="$playlistids\n"
+[ -n "$videoids" ] && ids="$ids$videoids"
+# url prefix for videos and playlists
+videolink="https://youtu.be/"
+playlink="https://youtube.com/playlist?list="
+#
+# OPTIONAL: Display thumbnail on sxiv
+#
+cachedir="/tmp/redyt"
+[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+img="http://img.youtube.com/vi"
+max="maxresdefault.jpg"
+HQ="hqdefault.jpg"
+mid="mqdefault.jpg"
+low="sddefault.jpg"
+# only one thumbnail, the selected one, before watching the video was the first use of this
+thumb() {
+	curl -sL "$img/$id/$max" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
+	}
+# all 30 thumbnails
+thumball() {
+	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$max," > "$cachedir"/thumb.txt
+	while read -r URL; do
+		var=$((var + 1))
+		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
+	done < "$cachedir"/thumb.txt
+	notify-send "Finished⌛" && sxiv -bpt -s f "$cachedir"/*.jpg && rm "${cachedir:?}"/*
+}
+# Making this a function because I will be repeating this
+choose() {
+	clear
+	echo "Choose Video/Playlist to play: "
+	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+	[ -z "$choice" ] && exit 		# if esc-ed then exit
+	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
+	echo -e "$choice\t($id)"
+}
+# if user wants to view first 30 thumbnails first then...
+[ -z "$status001" ] && choose
+[ -n "$status001" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose #&& dmeurl "$videolink$id"
+
+case $id in
+# the 'choice' variable as a second argument is to display it on a notification with dmenurl
+		# 11 digit id = video
+	???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+		# 34 digit id = playlist
+	??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
+		*) exit ;;
+esac
