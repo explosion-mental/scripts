@@ -1,25 +1,31 @@
 #!/bin/sh
+# Make your clipboard thingys helpful
+# Dep(qrencode, mpv, etc) you can edit these easily
 
 menu(){
-    printf "1. [URL]   Save as bookmark📑\n"
-    printf "2. [URL]   Open on Browser🦊\n"
-    printf "3. [URL]   Download file📥\n"
-    printf "4. [URL]   Download yt audio🎧\n"
-    printf "5. [URL]   Shorten url✂️\n"
-    printf "6. [URL]   Play videos/audio in mpv🤟🎥\n"
-    printf "7. [Image] Save clipbaord image🔖\n"
-    printf "8. [Shell] Run shell command on st🤖\n"
-    printf "9. [GOD]   Save godwords on your clipboard\n"
+	printf "1.  [URL]   Save as bookmark📑\n"
+	printf "2.  [URL]   Open on Browser🦊\n"
+	printf "3.  [URL]   Download file📥\n"
+	printf "4.  [URL]   Download yt audio🎧\n"
+	printf "5.  [URL]   Shorten url✂️\n"
+	printf "6.  [URL]   Play videos/audio in mpv🤟🎥\n"
+	printf "7.  [Text]  Convert text to QR image\n"
+	printf "8.  [Image] Save clipbaord image🔖\n"
+	printf "9.  [Shell] Run shell command on st🤖\n"
+	printf "10. [GOD]   Save godwords on your clipboard\n"
 }
 spell_failed(){
 notify-send "Error 404🤖"
 exit 1
 }
 
+cachedir=/tmp
+#[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 # 'c' or 'clipboard'
 prompt=$(xclip -o -sel c | tr -d '\n')
 # Check if clipboard has something
 [ "$prompt" = "" ] && notify-send "Empty clipboard📎" && exit
+#[ "$prompt" = "" ] && clipmenu ; exit
 [ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}" || prompt="$prompt"
 choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d. -f1)
 cbtext=$(xclip -o -selection clipboard)
@@ -33,6 +39,8 @@ case $choice in
         qndl "$cbtext" || spell_failed	;;
     4)
         qndl "$cbtext" 'audio' || spell_failed	;;
+	#notify-send "⏳ Downloading audio..." "<i><u>'$(basename "$1")'</i></u>..."
+	#tsp -nf youtube-dl "$1" --add-metadata -icxf bestaudio/best --exec "mv {} $HOME/Downloads"
     5)
         notify-send "Cutting...✂️"
         output=$(curl -s -F"shorten=$cbtext" 0x0.st)
@@ -43,9 +51,11 @@ case $choice in
     6)
         mpv "$cbtext" || spell_failed	;;
     7)
-        xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
+	qrencode -o $cachedir/tmpqrcode.png "$cbtext" && sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png ;;
     8)
-	setsid -f st -e "$cbtext" || spell_failed	;;
+        xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
     9)
+	setsid -f st -e "$cbtext" || spell_failed	;;
+    10)
 	godwords | xclip -sel c	;;
 esac
