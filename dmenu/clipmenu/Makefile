@@ -3,6 +3,7 @@
 # Why make this complicated, just put them on your ~/.local/bin dir!
 REQUIRED_BINS := xclip clipnotify
 #PREFIX ?= /usr
+#PREFIX = $HOME/.local/
 PREFIX = /usr/local
 install:
 	install --target "${PREFIX}/bin" -D -m755 clipmenu clipmenud clipdel clipctl
