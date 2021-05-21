@@ -3,12 +3,12 @@ Some usefull scripts or forks of (and of course Luke's scripts).
 The important ones are:
 
 ## termyt
-The changes I made where on adding a way to see thumbnails, which now I barely use, <s>by typing "i " before your search. <s> Now it have a `-t` flag
+The changes I made where on adding a way to see thumbnails, which now I barely use, <s>by typing "i " before your search. </s> Now it have a `-t` flag
 
 _The original idea was to give thumbnail to the video your going to watch but it gets annoying._
 
 ## dmenurl
-I got this from Luke's scripts but I can't find it anymore, I made some changes and this is some kind of handler <s>(Yes I use vlc, my mpv is broken).<s> _**Never** said that..._
+I got this from Luke's scripts but I can't find it anymore, I made some changes and this is some kind of handler <s>(Yes I use vlc, my mpv is broken).</s> _**Never** said that..._
 
 ## redyt
 Bugswriter script, really cool!
