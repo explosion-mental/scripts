@@ -35,6 +35,7 @@ while getopts ":h :g :r :R" opt; do
 	#notifier=notify-send	;;
 	R)
 	status001=1
+	[ "$OPTARG" = " " ] && help_opt && exit 1
 	[ "$OPTARG" = "max" ] && res="maxresdefault.jpg"
 	[ "$OPTARG" = "hq"  ] && res="hqdefault.jpg"
 	[ "$OPTARG" = "mid" ] && res="mqdefault.jpg"
@@ -48,6 +49,8 @@ while getopts ":h :g :r :R" opt; do
 	#query="$*"	;;
     esac
 done
+# Removes all the options that have been parsed by getopts from the parameters list, and so after that point, $1 will refer to the first non-option argument passed to the script.
+shift "$((OPTIND-1))"
 
 [ -z "$query" ] && if [ -z "$*" ]; then
 	printf '%s' " Search: "
@@ -67,11 +70,19 @@ query=$(echo "$query" | sed \
 	-e 's| |+|g')
 [ -z "$query" ] && exit
 
+#fetching () { Function?
+# fetch the results with the $query and
+# delete all escaped characters
+
 # Why you wanna tell google you use linux?
 response="$(curl "https://www.youtube.com/results" -s -G --user-agent "$user_agent" --data-urlencode "search_query=$query" -H 'authority: www.youtube.com' -H 'accept-language: en-US,en;q=0.9' -L --compressed)"
+#response=$(curl -Gs --compressed "https://www.youtube.com/results?search_query=$query" --user-agent "$user_agent" | sed 's|\\.||g')
+#response="$(curl -s "https://www.youtube.com/results?search_query=$query" | sed 's|\\.||g')"
 
 # if unable to fetch the youtube results page, inform and exit (posix?)
+#if ! printf '%s' "$response" | grep -q "script" ; then echo "unable to fetch yt"; exit 1; fi
 [ -z "$response" ] && print_error "\033[31mERROR[#02]: Couldn't find data on site.\033[0m\n" && exit 1
+#if ! grep -q "script" <<< "$response"; then echo "unable to fetch yt"; exit 1; fi
 
 # regex expression to match video and playlist entries from yt result page
 vgrep='"videoRenderer":{"videoId":"\K.{11}".+?"text":".+?[^\\](?=")'
@@ -86,11 +97,9 @@ getresults() {
 # get the list of videos/playlists and their ids in videoids and playlistids
 videoids=$(getresults "$vgrep")
 playlistids=$(getresults "$pgrep" "(playlist)")
-
 # if there are playlists or videos, append them to list
 [ -n "$playlistids" ] && ids="$playlistids\n"
 [ -n "$videoids" ] && ids="$ids$videoids"
-
 # url prefix for videos and playlists
 videolink="https://youtu.be/"
 playlink="https://youtube.com/playlist?list="
@@ -98,19 +107,33 @@ playlink="https://youtube.com/playlist?list="
 # OPTIONAL: Display thumbnail on sxiv
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 img="http://img.youtube.com/vi"
+
+#max="maxresdefault.jpg"
+#HQ="hqdefault.jpg"
+#mid="mqdefault.jpg"
+#low="sddefault.jpg"
+
 # only one thumbnail, the selected one, before watching the video was the first use of this
-thumb() {
-	curl -sL "$img/$id/$res" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
-	}
+#thumb() {
+	#curl -sL "$img/$id/$res" > "$cachedir/$(echo "$choice").jpg" && sxiv -abp -s f "$cachedir/$(echo "$choice").jpg"  >/dev/null 2>&1 && rm "${cachedir:?}"/* ; echo "$ids" > ~/yt
+	#}
+
 # 30 thumbnails
 thumball() {
 	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
 	while read -r URL; do
 		var=$((var + 1))
-	$task -nf curl -L "$URL" > "$cachedir"/"$(echo -e "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
+	$task -nf curl -L "$URL" > "$cachedir"/"$(printf '%s' "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
 	done < $cachedir/thumb.txt
 	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/* ; rm "${cachedir:?}"/*
 }
+
+#		curl -sL "$URL" > "$cachedir/$(echo "$ids" | sed "${var}q;d" | awk '{print $1}').jpg";
+# The only problem here is that images don't appear in the "algorithm" order but does it really matter?
+#		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | tac | sed "${var}q;d" | cut -d'	' -f2).jpg";
+
+# prompt the results to user infinitely until they exit (escape)
+# while true; do # I don't need to search infinitely
 
 # Making this a function because I will be repeating this
 choose() {
@@ -120,8 +143,17 @@ choose() {
 	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
 	[ -z "$choice" ] && exit 		# if esc-ed then exit
 	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
-	echo -e "$choice\t($id)"
+	printf '%s' "$choice\t($id)"
 }
+
+#choose_sxiv() {
+##	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+#	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
+#	choice=$(sxiv -bpt -s f "$cachedir"/*)
+#	[ -z "$choice" ] && exit 		# if esc-ed then exit
+#	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
+#	rm $cachedir/*
+#}
 
 #[ -n $description ] && youtube-dl "https://www.youtube.com/results?search_query=$query" --get-description >> "$cachedir"/description.TXT && setsid -f "$TERMINAL" -e less "$cachedir"/description.TXT
 [ -z "$status001" ] && choose
@@ -131,9 +163,9 @@ case $id in
 # the 'choice' variable as a second argument is to display it on a notification with dmenurl
 		# 11 digit id = video
 	???????????) dmenurl "$videolink$id" "$(echo "$choice" | sed 's/ *//')" ;;
-	#???????????) mpv "$videolink$id" ;;
+	#???????????) dmenurl "$videolink$id" "${choice// */}" ;;
 		# 34 digit id = playlist
 	??????????????????????????????????) dmenurl "$playlink$id" "$(echo "$choice" | sed 's/ *//')" ;;
-	#??????????????????????????????????) mpv "$playlink$id"	;;
+	#??????????????????????????????????) dmenurl "$playlink$id" "${choice// *//}" ;;
 		*) exit ;;
 esac

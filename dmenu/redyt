@@ -5,8 +5,8 @@
 #[ ! "$(which "$prog")" ] && echo "Please install $prog!" && exit 1
 #done
 # If notify-send is not installed, use echo as notifier
-[ ! "$(which notify-send)" ] && notifier="echo" || notifier="notify-send"
-#notifier="notify-send"
+#[ ! "$(which notify-send)" ] && notifier="echo" || notifier="notify-send"
+notifier="notify-send"
 
 # reddit colors (dmenu flags only)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
@@ -23,18 +23,19 @@ cachedir="/tmp/redyt"
 
 help_opt() {
 	#Check if necessary programs are installed
-	for prog in dmenu jq sxiv; do
-	[ ! "$(which "$prog")" ] && echo "Please install $prog!"
-	# How to not get which output
+	for Dep in dmenu jq; do
+		if ! command -v "$Dep" 1>/dev/null; then
+			printf "%s not found. Please install it.\n\n" "$Dep"
+		fi
 	done
 	printf "Usage:\n"
 	printf "\tredyt				asks for input in stdin using fzf\n"
-	printf "\tredyt <search query>		takes input from the passed query using fzf\n"
+	printf "\tredyt <subreddit>		takes input from the passed query using fzf\n"
 	printf "\tredyt -o			Displays the posts (usefull if you don't want to download everthing)\n"
 	printf "\tredyt -r			takes input and prompts using dmenu/rofi\n"
 }
 
-while getopts ":h :r o" opt; do
+while getopts ":h :r :o" opt; do
     case $opt in
 	h)
 	help_opt && exit 1	;;
@@ -42,13 +43,15 @@ while getopts ":h :r o" opt; do
 	#subreddit=$(echo | dmenu -p "🔎 Search: ")
 	subreddit=$(dmenu $colors -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
 	#promptcmd="$guicmd -p Video:"
-	[ -z "$query" ] && exit 1	;;
+	[ -z "$subreddit" ] && exit 1	;;
 	o)
 	format_reddit=1 ;;
 	?)
 	echo "Error! Invalid option!" && help_opt && exit 1	;;
     esac
 done
+# Removes all the options that have been parsed by getopts from the parameters list, and so after that point, $1 will refer to the first non-option argument passed to the script.
+shift "$((OPTIND-1))"
 
 # If no argument is passed
 [ -z "$subreddit" ] && if [ -z "$*" ]; then
@@ -71,45 +74,49 @@ $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing..."
 # first 100 entries (limit), and store it inside
 # cachedir/tmp.json
 limit=100
-tmp_json="$subreddit".json
+#tmp_json="$subreddit".json
 user_agent="User-Agent: your bot 0.1"
 #curl -sH "User-agent: 'your bot 0.1'" "https://www.reddit.com/r/$subreddit/hot.json?limit=$limit" \
-curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" \
-	> "$cachedir"/"$tmp_json"
+#live_dl=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent")
+	#> "$cachedir"/"$tmp_json"
 
 
 # Headers '-o' flag
 #format_reddit_json () {
+gap="                                                            "
 if [ $format_reddit ]; then
-	{	jq -r '.data.children[].data | [
+	curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | { jq -r '.data.children[].data | [
 				.title,
 				.preview.reddit_video_preview.fallback_url,
 				.url_overridden_by_dest
-			] | @tsv' < "$cachedir"/"$tmp_json"
+			] | @tsv'
 		#<<-EOF
 		#$*
 		#EOF
-	#	[ $? -eq 0 ] || exit 1
+		#[ $? -eq 0 ] || exit 1
 	} |
-	while IFS=$tab_space read title url _;do
+	while IFS=\t read title url _;do
 		[ -z "$url" ] && continue
 		printf "%s%s\t%s\n" "$title" "$gap$gap$gap" "$url"
-	done > "$cachedir"/posts_.TXT
-#}
-else
-# Create a list of images
-imgs=$(jq '.' < "$cachedir"/"$tmp_json" | grep url_overridden_by_dest | grep -Eo "http(s|)://.*(jpg|png|gif)\b" | sort -u)
+	done < "$cachedir"/posts_headers.TXT
 fi
+#}
+#else
+#í Create a list of images
+#imgs=$(jq -r '.' < "$live_dl" | grep url_overridden_by_dest | grep -Eo "http(s|)://.*(jpg|png|gif)\b" | sort -u)
+#fi
 
-media_urls=$(printf "%s" "$fields" | dmenu -l 15 | \
+#imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
+
+media_urls=$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/"post_headers.TXT"  | \
 	while IFS= read line; do
 		printf "%s " "${line##*$tab_space}"
-	done
-)
+	done)
+dmenurl $media_url
 [ -n "$media_urls" ] || exit 1
 
 # If there are no images, exit
-#[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
+[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
 # Download images to $cachedir (use task spooler)
 kill -37 "$(pidof dwmblocks)"	# task module bar
