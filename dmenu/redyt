@@ -1,14 +1,8 @@
 #!/bin/sh
 
-# Check if necessary programs are installed
-#for prog in dmenu jq sxiv; do
-#[ ! "$(which "$prog")" ] && echo "Please install $prog!" && exit 1
-#done
-# If notify-send is not installed, use echo as notifier
-#[ ! "$(which notify-send)" ] && notifier="echo" || notifier="notify-send"
-notifier="notify-send"
-
-# reddit colors (dmenu flags only)
+# Defaults
+notifier="echo"
+# reddit colors (dmenu)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
 # Default config file
 configdir="${XDG_CONFIG_HOME:-$HOME/.config}"
@@ -40,9 +34,8 @@ while getopts ":h :r :o" opt; do
 	h)
 	help_opt && exit 1	;;
 	r)
-	#subreddit=$(echo | dmenu -p "🔎 Search: ")
 	subreddit=$(dmenu $colors -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
-	#promptcmd="$guicmd -p Video:"
+	notifier="notify-send"
 	[ -z "$subreddit" ] && exit 1	;;
 	o)
 	format_reddit=1 ;;
@@ -55,8 +48,7 @@ shift "$((OPTIND-1))"
 
 # If no argument is passed
 [ -z "$subreddit" ] && if [ -z "$*" ]; then
-	# Ask the user to enter a subreddit
-	#subreddit=$(dmenu $colors -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
+	# Ask the user to enter/select a subreddit
 	printf '%s\n' "Select Subreddit r/"
 	subreddit=$(fzf  < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
 	# If no subreddit was chosen, exit
@@ -70,63 +62,56 @@ fi
 # Send a notification
 $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing..."
 
-# Download the subreddit feed, containing only the
-# first 100 entries (limit), and store it inside
-# cachedir/tmp.json
+# Download/stream the subreddit feed containing only the
+# first 100 entries
 limit=100
-#tmp_json="$subreddit".json
 user_agent="User-Agent: your bot 0.1"
-#curl -sH "User-agent: 'your bot 0.1'" "https://www.reddit.com/r/$subreddit/hot.json?limit=$limit" \
-#live_dl=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent")
-	#> "$cachedir"/"$tmp_json"
-
 
 # Headers '-o' flag
-#format_reddit_json () {
 gap="                                                            "
+tab_space=$(printf '\t')
+
 if [ $format_reddit ]; then
 	curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | { jq -r '.data.children[].data | [
 				.title,
 				.preview.reddit_video_preview.fallback_url,
 				.url_overridden_by_dest
 			] | @tsv'
-		#<<-EOF
-		#$*
-		#EOF
-		#[ $? -eq 0 ] || exit 1
 	} |
-	while IFS=\t read title url _;do
+	while IFS=$tab_space read title url _;do
 		[ -z "$url" ] && continue
-		printf "%s%s\t%s\n" "$title" "$gap$gap$gap" "$url"
-	done < "$cachedir"/posts_headers.TXT
+		printf "%s%s\t%s\n" "$title" "$gap$gap$gap" "$url" >> "$cachedir"/posts_headers.TXT
+	done
 fi
-#}
-#else
-#í Create a list of images
-#imgs=$(jq -r '.' < "$live_dl" | grep url_overridden_by_dest | grep -Eo "http(s|)://.*(jpg|png|gif)\b" | sort -u)
-#fi
 
-#imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
-
-media_urls=$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/"post_headers.TXT"  | \
+if [ $format_reddit ]; then
+    while true; do
+	media_url="$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/posts_headers.TXT |
 	while IFS= read line; do
 		printf "%s " "${line##*$tab_space}"
-	done)
-dmenurl $media_url
-[ -n "$media_urls" ] || exit 1
+	done)"
+	[ -z "$media_url" ] && exit 1
+	sxiv -abp -s f "$media_url"
+	# if you don't have sxiv patches i guess uncomment this
+	#wget -P "$cachedir" "$media_url" && sxiv -abp -s f "$cachedir"/*
+	rm "${cachedir:?}"/*
+    done
+else
+	imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
 
 # If there are no images, exit
 [ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
 # Download images to $cachedir (use task spooler)
 kill -37 "$(pidof dwmblocks)"	# task module bar
+#I rather download a lot of images on a directory
 tsp -nf wget -P "$cachedir" $imgs
 
-# Send a notification
 $notifier "Redyt" "👍 Download Finished⌛, Enjoy <b>$subreddit</b> 😉"
 
 # Display the images
-sxiv -abp -s f "$cachedir"/*
+sxiv -abp -s f $imgs
 
 # Once finished, remove all of the cached images
 rm "${cachedir:?}"/*
+fi
