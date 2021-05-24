@@ -15,20 +15,6 @@ cachedir="/tmp/redyt"
 # If cachedir does not exist, create it
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 
-help_opt() {
-	#Check if necessary programs are installed
-	for Dep in dmenu jq; do
-		if ! command -v "$Dep" 1>/dev/null; then
-			printf "%s not found. Please install it.\n\n" "$Dep"
-		fi
-	done
-	printf "Usage:\n"
-	printf "\tredyt				asks for input in stdin using fzf\n"
-	printf "\tredyt <subreddit>		takes input from the passed query using fzf\n"
-	printf "\tredyt -o			Displays the posts (usefull if you don't want to download everthing)\n"
-	printf "\tredyt -r			takes input and prompts using dmenu/rofi\n"
-}
-
 while getopts ":h :r :o" opt; do
     case $opt in
 	h)
@@ -91,11 +77,18 @@ if [ $format_reddit ]; then
 		printf "%s " "${line##*$tab_space}"
 	done)"
 	[ -z "$media_url" ] && exit 1
-	# if you have sxiv patches with libcurl...
-	#sxiv -abp -s f "$media_url"
-	wget -P "$cachedir" "$media_url" && sxiv -abp -s f "$cachedir"/*
-	rm "${cachedir:?}"/*
+	case "$media_url" in
+		*png|*jpg|*jpe|*jpeg|*JPG|*gif|*webp)
+		# if you have sxiv patches with libcurl...
+		#sxiv -abp -s f "$media_url"
+		curl -sL "$cachedir" > "$cachedir"/"$(echo "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/* ; rm "${cachedir:?}"/*
+		;;
+		*mkv|*webm|*mp4)
+		mpv "$media_url"
+		;;
+	esac
     done
+    rm "$cachedir"/posts_headers.TXT
 else
 	imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
 
@@ -115,3 +108,21 @@ sxiv -abp -s f $imgs
 # Once finished, remove all of the cached images
 rm "${cachedir:?}"/*
 fi
+
+#############
+# functions #
+#############
+
+help_opt() {
+	#Check if necessary programs are installed
+	for Dep in dmenu jq; do
+		if ! command -v "$Dep" 1>/dev/null; then
+			printf "%s not found. Please install it.\n\n" "$Dep"
+		fi
+	done
+	printf "Usage:\n"
+	printf "\tredyt				asks for input in stdin using fzf\n"
+	printf "\tredyt <subreddit>		takes input from the passed query using fzf\n"
+	printf "\tredyt -o			Displays the posts (usefull if you don't want to download everthing)\n"
+	printf "\tredyt -r			takes input and prompts using dmenu/rofi\n"
+}
