@@ -91,9 +91,9 @@ if [ $format_reddit ]; then
 		printf "%s " "${line##*$tab_space}"
 	done)"
 	[ -z "$media_url" ] && exit 1
-	sxiv -abp -s f "$media_url"
-	# if you don't have sxiv patches i guess uncomment this
-	#wget -P "$cachedir" "$media_url" && sxiv -abp -s f "$cachedir"/*
+	# if you have sxiv patches with libcurl...
+	#sxiv -abp -s f "$media_url"
+	wget -P "$cachedir" "$media_url" && sxiv -abp -s f "$cachedir"/*
 	rm "${cachedir:?}"/*
     done
 else
