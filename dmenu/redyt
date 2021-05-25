@@ -1,26 +1,47 @@
 #!/bin/sh
 
-# Defaults
+guicmd="fzf --header="
 notifier="echo -e"
 # reddit colors (dmenu)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
-# Default config file
+# config file
 configdir="${XDG_CONFIG_HOME:-$HOME/.config}"
 # If subbreddit.txt does not exist, create it to prevent
 # the program from not functioning properly. Sleep 1.5 so its redable if using dmenu
 defaultsub="linuxmemes"
 [ ! -f "$configdir/subreddit.txt" ] && "$notifier" "Creating $configdir/subreddit.txt" && sleep 1.5 && echo "$defaultsub" >> "$configdir/subreddit.txt"
-# Default directory used to store the feed file and fetched images
+# Cache for images
 cachedir="/tmp/redyt"
 # If cachedir does not exist, create it
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+#if ! command -v tsp 1>/dev/null; then
+#	task="$(tsp -nf)"
+#fi
+#############
+# functions #
+#############
 
+help_opt() {
+	#Check if necessary programs are installed
+	for Dep in dmenu jq; do
+		if ! command -v "$Dep" 1>/dev/null; then
+			printf "%s not found. Please install it.\n\n" "$Dep"
+		fi
+	done
+	printf "Usage:\n"
+	printf "\tredyt				Asks for input in stdin using fzf\n"
+	printf "\tredyt <subreddit>		Takes input from the passed query using fzf\n"
+	printf "\tredyt -r			Prompts using dmenu/rofi\n"
+	printf "\tredyt -o			Displays posts/titles/headers (usefull if you don't want to download everthing)\n"
+	printf "\tredyt -h			Shows this :)\n"
+}
 while getopts ":h :r :o" opt; do
     case $opt in
 	h)
 	help_opt && exit 1	;;
 	r)
-	subreddit=$(dmenu $colors -p "Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
+	guicmd="dmenu $colors -i -l 10 -p "
+	subreddit=$($guicmd"Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
 	notifier="notify-send"
 	[ -z "$subreddit" ] && exit 1	;;
 	o)
@@ -36,7 +57,7 @@ shift "$((OPTIND-1))"
 [ -z "$subreddit" ] && if [ -z "$*" ]; then
 	# Ask the user to enter/select a subreddit
 	printf '%s\n' "Select Subreddit r/"
-	subreddit=$(fzf  < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
+	subreddit=$($guicmd < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
 	# If no subreddit was chosen, exit
 	[ -z "$subreddit" ] && exit 1
 # Otherwise assign the first argument to be
@@ -71,9 +92,9 @@ if [ $format_reddit ]; then
 	done
 fi
 
-if [ -n $format_reddit ]; then
+if [ $format_reddit ]; then
 	while true; do	#prompts until you esc
-		media_url="$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/posts_headers.TXT |
+		media_url="$($guicmd"Select Post" < "$cachedir"/posts_headers.TXT |
 		while IFS= read line; do
 			# here was a space that got me debugging a lot xD
 			printf "%s" "${line##*$tab_space}"
@@ -89,8 +110,8 @@ if [ -n $format_reddit ]; then
 			*mkv|*webm|*mp4)
 			mpv "$media_url"
 			;;
-			*) # anything else with mpv does someone on
-			   # reddit share *pdf|*cvs...
+			*) # anything else with mpv. Does someone on
+			   # reddit share *pdf|*cvs...?
 			mpv --prefetch-playlist=yes \
 			--image-display-duration=5 $media_urls
 		esac
@@ -112,21 +133,3 @@ sxiv -abp -s f $imgs
 rm "${cachedir:?}"/*
 
 fi
-
-#############
-# functions #
-#############
-
-help_opt() {
-	#Check if necessary programs are installed
-	for Dep in dmenu jq; do
-		if ! command -v "$Dep" 1>/dev/null; then
-			printf "%s not found. Please install it.\n\n" "$Dep"
-		fi
-	done
-	printf "Usage:\n"
-	printf "\tredyt				asks for input in stdin using fzf\n"
-	printf "\tredyt <subreddit>		takes input from the passed query using fzf\n"
-	printf "\tredyt -o			Displays the posts (usefull if you don't want to download everthing)\n"
-	printf "\tredyt -r			takes input and prompts using dmenu/rofi\n"
-}
