@@ -2,6 +2,7 @@
 
 guicmd="fzf --header="
 notifier="echo -e"
+#task="$(tsp -nf)"
 # reddit colors (dmenu)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
 # config file
@@ -14,9 +15,6 @@ defaultsub="linuxmemes"
 cachedir="/tmp/redyt"
 # If cachedir does not exist, create it
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-#if ! command -v tsp 1>/dev/null; then
-#	task="$(tsp -nf)"
-#fi
 #############
 # functions #
 #############
@@ -125,11 +123,13 @@ else
 
 # Download images to $cachedir (use task spooler)
 kill -37 "$(pidof dwmblocks)"	# task module bar
-tsp -nf wget -P "$cachedir" $imgs
+$task wget -P "$cachedir" $imgs
 
 $notifier "Redyt" "👍 Download Finished⌛, Enjoy <b>$subreddit</b> 😉"
 # Display the images and once finished, remove cache
-sxiv -abp -s f $imgs
+sxiv -abp -s f "$cachedir"/*
+#uncomment if you have sxiv patched with libcurl
+#sxiv -abp -s f $imgs
 rm "${cachedir:?}"/*
 
 fi
