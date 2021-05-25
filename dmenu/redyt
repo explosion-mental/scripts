@@ -1,7 +1,7 @@
 #!/bin/sh
 
 # Defaults
-notifier="echo"
+notifier="echo -e"
 # reddit colors (dmenu)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
 # Default config file
@@ -9,7 +9,7 @@ configdir="${XDG_CONFIG_HOME:-$HOME/.config}"
 # If subbreddit.txt does not exist, create it to prevent
 # the program from not functioning properly. Sleep 1.5 so its redable if using dmenu
 defaultsub="linuxmemes"
-[ ! -f "$configdir/subreddit.txt" ] && notify-send "Creating $configdir/subreddit.txt" && sleep 1.5 && echo "$defaultsub" >> "$configdir/subreddit.txt"
+[ ! -f "$configdir/subreddit.txt" ] && "$notifier" "Creating $configdir/subreddit.txt" && sleep 1.5 && echo "$defaultsub" >> "$configdir/subreddit.txt"
 # Default directory used to store the feed file and fetched images
 cachedir="/tmp/redyt"
 # If cachedir does not exist, create it
@@ -45,8 +45,9 @@ else
 	subreddit="$1"
 fi
 
-# Send a notification
-$notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing..."
+# notification
+[ -z $format_reddit ] && $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing..."
+[ $format_reddit ] && $notifier "Redyt" "📩 Downloading posts"
 
 # Download/stream the subreddit feed containing only the
 # first 100 entries
@@ -54,7 +55,7 @@ limit=100
 user_agent="User-Agent: your bot 0.1"
 
 # Headers '-o' flag
-gap="                                                            "
+gap="                                                            "	#so url are non-visible
 tab_space=$(printf '\t')
 
 if [ $format_reddit ]; then
@@ -70,43 +71,46 @@ if [ $format_reddit ]; then
 	done
 fi
 
-if [ $format_reddit ]; then
-    while true; do
-	media_url="$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/posts_headers.TXT |
-	while IFS= read line; do
-		printf "%s " "${line##*$tab_space}"
-	done)"
-	[ -z "$media_url" ] && exit 1
-	case "$media_url" in
-		*png|*jpg|*jpe|*jpeg|*JPG|*gif|*webp)
-		# if you have sxiv patches with libcurl...
-		#sxiv -abp -s f "$media_url"
-		curl -sL "$cachedir" > "$cachedir"/"$(echo "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/* ; rm "${cachedir:?}"/*
-		;;
-		*mkv|*webm|*mp4)
-		mpv "$media_url"
-		;;
-	esac
-    done
-    rm "$cachedir"/posts_headers.TXT
+if [ -n $format_reddit ]; then
+	while true; do	#prompts until you esc
+		media_url="$(dmenu $colors -p "Select Post" -i -l 10 < "$cachedir"/posts_headers.TXT |
+		while IFS= read line; do
+			# here was a space that got me debugging a lot xD
+			printf "%s" "${line##*$tab_space}"
+		done)"
+		[ -z "$media_url" ] && exit 1
+		case "$media_url" in
+			*png|*jpg|*jpe|*jpeg|*JPG|*gif|*webp)
+			# Uncomment if you have sxiv patched with libcurl
+			#sxiv -abp -s f "$media_url"
+			curl -sL "$media_url" > "$cachedir"/"$(printf '%s' "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/*
+			rm "${cachedir:?}"/*
+			;;
+			*mkv|*webm|*mp4)
+			mpv "$media_url"
+			;;
+			*) # anything else with mpv does someone on
+			   # reddit share *pdf|*cvs...
+			mpv --prefetch-playlist=yes \
+			--image-display-duration=5 $media_urls
+		esac
+		sleep 10
+    	done
+	rm "$cachedir"/posts_headers.TXT
 else
+# See all images of subreddit
 	imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
-
-# If there are no images, exit
-[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
+	[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
 # Download images to $cachedir (use task spooler)
 kill -37 "$(pidof dwmblocks)"	# task module bar
-#I rather download a lot of images on a directory
 tsp -nf wget -P "$cachedir" $imgs
 
 $notifier "Redyt" "👍 Download Finished⌛, Enjoy <b>$subreddit</b> 😉"
-
-# Display the images
+# Display the images and once finished, remove cache
 sxiv -abp -s f $imgs
-
-# Once finished, remove all of the cached images
 rm "${cachedir:?}"/*
+
 fi
 
 #############
