@@ -1,0 +1,7 @@
+#!/bin/sh
+
+# Displays a quick note
+# Signal 30
+msg="fuck"
+
+[ -n "$msg" ] && printf '%s' "$msg"
