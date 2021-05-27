@@ -39,8 +39,8 @@ while getopts ":h :r :o" opt; do
 	help_opt && exit 1	;;
 	r)
 	guicmd="dmenu $colors -i -l 10 -p "
-	subreddit=$($guicmd"Select Subreddit r/" -i -l 10 < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
-	notifier="notify-send"
+	subreddit="$($guicmd"Select Subreddit r/" < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')"
+	notifier=notify-send
 	[ -z "$subreddit" ] && exit 1	;;
 	o)
 	format_reddit=1 ;;
@@ -55,18 +55,22 @@ shift "$((OPTIND-1))"
 [ -z "$subreddit" ] && if [ -z "$*" ]; then
 	# Ask the user to enter/select a subreddit
 	printf '%s\n' "Select Subreddit r/"
-	subreddit=$($guicmd < "$configdir/subreddit.txt" | cut -d\| -f1 | awk '{$1=$1;print}')
+	# Extra step so anything that doesn't match
+	# on fzf would still be stored
+	print_query="$($guicmd --print-query < "$configdir/subreddit.txt")"
+	query_head="$(echo "$print_query" | head -1)"
+	[ -z "$query_head" ] && query_head="$(echo "$print_query" | tail -1)"
+	subreddit="$(echo "$query_head" | cut -d\| -f1 | awk '{$1=$1;print}')"
 	# If no subreddit was chosen, exit
 	[ -z "$subreddit" ] && exit 1
-# Otherwise assign the first argument to be
-# the subreddit variable
+# Otherwise assign the first argument to be the subreddit variable
 else
 	subreddit="$1"
 fi
 
 # notification
-[ -z $format_reddit ] && $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing..."
-[ $format_reddit ] && $notifier "Redyt" "📩 Downloading posts"
+[ -z $format_reddit ] && $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing $subreddit..."
+[ $format_reddit ] && $notifier "Redyt" "📩 Looking for posts on $subreddit"
 
 # Download/stream the subreddit feed containing only the
 # first 100 entries
@@ -105,7 +109,7 @@ if [ $format_reddit ]; then
 			curl -sL "$media_url" > "$cachedir"/"$(printf '%s' "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/*
 			rm "${cachedir:?}"/*
 			;;
-			*mkv|*webm|*mp4)
+	*mkv|*webm|*mp4|*youtube.com/watch*|*youtube.com/playlist*|*youtu.be*|*hooktube.com*|*bitchute.com*)
 			mpv "$media_url"
 			;;
 			*) # anything else with mpv. Does someone on
