@@ -1,7 +1,24 @@
 #!/bin/sh
-
 # Displays a quick note
+# couldn't make it work with variables, so use a file instead
 # Signal 30
-msg="fuck"
 
-[ -n "$msg" ] && printf '%s' "$msg"
+# Put it on ${XDG_CACHE_HOME:-$HOME/.cache} or something
+notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-quicknotes.TXT"
+
+case $BLOCK_BUTTON in
+	1) reminder="$(echo | dmenu -p 'Quick note:')"
+	[ -z "$reminder" ] && exit
+	echo "$reminder" >> "$notes_file" && kill -64 "$(pidof dwmblocks)"
+		;;
+	2) rm "$notes_file" ;;
+	3) notify-send "Reminders" "\- Shows whatever you need to remember
+- Left click prompts for a note with dmenu
+- Middle click deletes the file of notes
+<b>Note:</b><i>You should put something little, otherwise use calcurse</i>." ;;
+	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
+esac
+#cat "$notes_file" 2>/dev/null || echo "NOTES"
+
+# You can see the history I guess
+tail -1 "$notes_file" 2>/dev/null || echo "NOTES"
