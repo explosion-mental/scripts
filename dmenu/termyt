@@ -13,6 +13,58 @@ user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Fi
 cachedir=/tmp/termyt	#for images and description
 task=tsp		#task spooler
 
+#############
+# functions #
+#############
+
+# Help
+help_opt() {
+	#Check if necessary programs are installed
+	for Dep in mpv youtube-dl fzf dmenu; do
+		if ! command -v "$Dep" 1>/dev/null; then
+			printf "%s not found. Please install it.\n\n" "$Dep"
+		fi
+	done
+	printf "Usage:\n"
+	printf "\ttermyt				asks for input in stdin using fzf\n"
+	printf "\ttermyt <search query>		takes input from the passed query using fzf\n"
+	printf "\ttermyt -r			takes input and prompts using dmenu/rofi\n"
+}
+# only one thumbnail, the selected one, before watching the video was the first use of this
+thumb_dl() {
+	curl -sL "$img/$id/$res" > "$cachedir"/"$choice".jpg && sxiv -abp -s f "$cachedir"/"$choice".jpg
+	rm "${cachedir:?}"/*
+	#; echo "$ids" > ~/yt
+}
+choose() {
+	echo "Choose Video/Playlist to play: "
+	choice=$(printf '%s' "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+	[ -z "$choice" ] && exit 		# if esc-ed then exit
+	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
+}
+
+# 30 thumbnails
+thumball() {
+	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
+	while read -r URL; do
+		var=$((var + 1))
+	$task -nf curl -L "$URL" > "$cachedir"/"$(printf '%s' "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
+	done < $cachedir/thumb.txt
+	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/* ; rm "${cachedir:?}"/*
+}
+
+#		curl -sL "$URL" > "$cachedir/$(echo "$ids" | sed "${var}q;d" | awk '{print $1}').jpg";
+# The only problem here is that images don't appear in the "algorithm" order but does it really matter?
+#		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | tac | sed "${var}q;d" | cut -d'	' -f2).jpg";
+#choose_sxiv() {
+##	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
+#	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
+#	choice=$(sxiv -bpt -s f "$cachedir"/*)
+#	[ -z "$choice" ] && exit 		# if esc-ed then exit
+#	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
+#	rm $cachedir/*
+#}
+
 # Handle options
 while getopts ":h :g :r :t :T" opt; do
 #case "$1" in
@@ -93,19 +145,6 @@ play_link="https://youtube.com/playlist?list="
 img="http://img.youtube.com/vi"
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 
-# only one thumbnail, the selected one, before watching the video was the first use of this
-thumb_dl() {
-	curl -sL "$img/$id/$res" > "$cachedir"/"$choice".jpg && sxiv -abp -s f "$cachedir"/"$choice".jpg
-	rm "${cachedir:?}"/*
-	#; echo "$ids" > ~/yt
-}
-choose() {
-	echo "Choose Video/Playlist to play: "
-	choice=$(printf '%s' "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-	[ -z "$choice" ] && exit 		# if esc-ed then exit
-	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
-}
-
 #[ -n $description ] && youtube-dl "https://www.youtube.com/results?search_query=$query" --get-description >> "$cachedir"/description.TXT && setsid -f "$TERMINAL" -e less "$cachedir"/description.TXT
 [ -z "$thumb" ] && choose
 [ -n "$thumb" ]  && choose && thumb_dl
@@ -122,42 +161,3 @@ case $id in
 		*) exit ;;
 esac
 
-#############
-# functions #
-#############
-
-# Help
-help_opt() {
-	#Check if necessary programs are installed
-	for Dep in mpv youtube-dl fzf dmenu; do
-		if ! command -v "$Dep" 1>/dev/null; then
-			printf "%s not found. Please install it.\n\n" "$Dep"
-		fi
-	done
-	printf "Usage:\n"
-	printf "\ttermyt				asks for input in stdin using fzf\n"
-	printf "\ttermyt <search query>		takes input from the passed query using fzf\n"
-	printf "\ttermyt -r			takes input and prompts using dmenu/rofi\n"
-}
-
-# 30 thumbnails
-thumball() {
-	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
-	while read -r URL; do
-		var=$((var + 1))
-	$task -nf curl -L "$URL" > "$cachedir"/"$(printf '%s' "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
-	done < $cachedir/thumb.txt
-	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/* ; rm "${cachedir:?}"/*
-}
-
-#		curl -sL "$URL" > "$cachedir/$(echo "$ids" | sed "${var}q;d" | awk '{print $1}').jpg";
-# The only problem here is that images don't appear in the "algorithm" order but does it really matter?
-#		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | tac | sed "${var}q;d" | cut -d'	' -f2).jpg";
-#choose_sxiv() {
-##	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-#	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
-#	choice=$(sxiv -bpt -s f "$cachedir"/*)
-#	[ -z "$choice" ] && exit 		# if esc-ed then exit
-#	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
-#	rm $cachedir/*
-#}
