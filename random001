@@ -1,3 +1,5 @@
 #!/bin/sh
+# 33 Random characters. Passwords or
+# random names (instead of 'Bigb00bs.png' -> 'y8LVc81ygSWj0BJbHmQ3UGnrmIxuP0w2.png').
 cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w ${1:-32} | head -n 1
 

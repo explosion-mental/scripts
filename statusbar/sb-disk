@@ -2,7 +2,7 @@
 
 # Status bar module for disk space
 # $1 should be drive mountpoint, otherwise assumed /.
-# Signal
+# Signal 29
 
 location=${1:-/}
 

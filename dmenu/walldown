@@ -7,7 +7,7 @@ tagoptions="nature\nminimalism\nCyberpunk 2077\nfantasy girl\ndigital art\nanime
 
 if [ -z "$1" ]; then
 	# Ask the user what wallpapers wants
-	query=$(printf "$tagoptions" | dmenu -p "Search Wallhaven: " -i)
+	query=$(printf '%s' "$tagoptions" | dmenu -p "Search Wallhaven: " -i)
 	[ -z "$query" ] && exit 	# If nothing was chosen, exit
 # Otherwise assign the first argument to the query
 else
@@ -15,17 +15,16 @@ else
 fi
 
 sortoptions="don't care\ndate_added\nrandom\nrelevance\nviews\nfavorites\ntoplist"
-sorting=$(printf "$sortoptions" | dmenu -p "Sort Order: " -i)
+sorting=$(printf '%s' "$sortoptions" | dmenu -p "Sort Order: " -i)
 [ -z "$sorting" ] && exit
 [ "$sorting" = "don't care" ] && sorting="" || sorting="\&sorting\=$sorting"
 
 resopt="don't care\n1920x1080\n1920x1200\n720x\nrelevance\nviews\nfavorites\ntoplist"
-res=$(printf "$resopt" | dmenu -p "Resolution: " -i)
+res=$(printf '%s' "$resopt" | dmenu -p "Resolution: " -i)
 [ -z "$res" ] && exit
 [ "$res" = "don't care" ] && res="" || res="atleast\=$res"
-#query="${query/ */+}"
+notify-send "Walldown" "📩Downloading wallpapers for <b>$query</b>🌋\n⏳Queuing..."
 query="$(echo "$query" | sed 's/ /+/g')"
-notify-send "Walldown" "📩Downloading wallpapers🌋\n⏳Queuing..."
 
 maxpage=4	#96img
 for i in $(seq 1 $maxpage);
@@ -33,9 +32,10 @@ do
 	curl -s https://wallhaven.cc/api/v1/search\?"$res$sorting"\&q\=$query\&page\=$i
 done > $cachedir/tmp.json
 page=$(jq '.' < $cachedir/tmp.json | grep -Eoh "https:\/\/w\.wallhaven.cc\/full\/.*(jpg|png)\b")
-[ -z $page ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | sed 's/+/ /g')</i></u>,\nplease try again later!😥" && rm "$cachedir"/* && exit
-# task spooler (remove it if you don't needed)
-kill -37 $(pidof dwmblocks); tsp -nf wget -nc -P $cachedir $page  #never doble quote $page (is a list)
+[ -z $page ] && notify-send "Walldown" "sadly, there are no images for\n<u><i>$(echo "$query" | tr ' ' '+')</i></u>,\nplease try again later!😥" && rm "$cachedir"/* && exit
+# task spooler (uncomment if you want)
+#kill -37 $(pidof dwmblocks); tsp -nf \
+wget -nc -P $cachedir $page  #never doble quote $page (is a list)
 notify-send "Walldown" "👍 Download Finished⌛, Enjoy! 🍵"
 sxiv -abp -s f $cachedir/*
 rm "${cachedir:?}"/*

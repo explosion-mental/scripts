@@ -125,9 +125,9 @@ else
 	imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
 	[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
-# Download images to $cachedir (use task spooler)
-kill -37 "$(pidof dwmblocks)"	# task module bar
-$task wget -P "$cachedir" $imgs
+#Uncomment for task spooler and dwmblock
+#kill -37 "$(pidof dwmblocks)" ; $task \
+wget -P "$cachedir" $imgs
 
 $notifier "Redyt" "👍 Download Finished⌛, Enjoy <b>$subreddit</b> 😉"
 # Display the images and once finished, remove cache
