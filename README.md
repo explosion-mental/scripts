@@ -3,12 +3,12 @@ Some usefull scripts or forks of (and of course Luke's scripts).
 The important ones are:
 
 ## termyt
-The changes I made where on adding a way to see thumbnails, which now I barely use, <s>by typing "i " before your search. </s> Now it have a `-t` flag
-
-_The original idea was to give thumbnail to the video your going to watch but it gets annoying._
+My 'simple' take on watching youtube. Use ytfzf if you are looking for more functionality.
+- -t flag for thumbnails
+**Use** `termyt -h`
 
 ## dmenurl
-I got this from Luke's scripts but I can't find it anymore, I made some changes and this is some kind of handler <s>(Yes I use vlc, my mpv is broken).</s> _**Never** said that..._
+I got this from Luke's scripts but I can't find it anymore, I made some changes and this is some kind of handler.
 
 ## redyt
 Bugswriter script, really cool!
@@ -16,6 +16,9 @@ Few changes
 - Best options on sxiv (imo)
 - Reddit colors🤓👍
 - Now it displays gifs as well
+- You can see "posts" _(titles,headers)_
+
+**Use** `redyt -h`
 
 ## dmenu_browser
 I forgot where I got this, but I use it to search firefox (since my url bar is hidden) and surf.
@@ -40,4 +43,11 @@ _NOTE:_ The `'audio'` flag its the only one, Why don't directly write the youtub
 ## mpdonti
 Notification when used, I need help on improving time ( 0.6-0.9 secs ).
 
-Have fun!
+## vifmimg
+If you use vifm consider taking a look at this.
+
+Remember from time to time you should use `vifmimg clean`.
+
+- You can see .docx and doc files now
+
+**Have fun!**

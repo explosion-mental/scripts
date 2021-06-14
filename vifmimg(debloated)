@@ -118,6 +118,24 @@ declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
         	> "$FIFO_UEBERZUG"
 }
 
+docxpreview() {
+[ ! "$6" == "$PDF_FILE" ] && rm -f "$cachedir/$6"
+
+# Using soffice (libreoffice commandline) to convert doc(x) to pdf
+[ ! -f "$cachedir/$6.jpg" ] && soffice --headless --convert-to pdf "$6" --outdir "$cachedir" 1&>/dev/null && pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$cachedir"/"$(noextname "$6").pdf" "$cachedir/$6"
+
+# Or just display it on text with --cat?
+# soffice --headless --cat "$6" --outputdir "$cachedir" 1&>/dev/null
+
+# instead of file why not variables?...
+echo "$6" > "$PDF_FILE_CONFIG"
+
+declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
+        	[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
+		[path]="$cachedir/$6.jpg") \
+        	> "$FIFO_UEBERZUG"
+}
+
 #previewpdf() { #png (fatter)
 #	# Should it convert the pdf-file to jpg or png? (jpg is faster!)
 #	# PDF_PATH: The temporary path where the image is saved
@@ -160,10 +178,12 @@ main() {
         "epubpreview") previewepub "$@" ;;
         "gifpreview") previewgif "$@" ;;
         "pdfpreview") previewpdf "$@" ;;
+        "docxpreview") docxpreview "$@" ;;
         "magickpreview") previewmagick "$@" ;;
         "audiopreview") previewaudio "$@" ;;
         "fontpreview") previewfont "$@" ;;
-        *) echo "Unknown command: '$*'" ;;
+	*) echo "Unknown command: " "$@"
+        #*) echo "Unknown command: '$*'" ;;
         #*) echo "Unknown command: '$@'" ;;
     esac
 }
