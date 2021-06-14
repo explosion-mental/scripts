@@ -1,10 +1,18 @@
 # scripts
 Some usefull scripts or forks of (and of course Luke's scripts).
+
+There are 3 directories:
+- Divine; experiments, ideas, fun..✝️
+- dmenu, scripts that **can** use dmenu or **hardcoded** to dmenu
+- statusbar, specially for dwmblocks see voidrice from lukesmith
+
+
 The important ones are:
 
 ## termyt
 My 'simple' take on watching youtube. Use ytfzf if you are looking for more functionality.
 - -t flag for thumbnails
+
 **Use** `termyt -h`
 
 ## dmenurl
