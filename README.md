@@ -56,6 +56,12 @@ If you use vifm consider taking a look at this.
 
 Remember from time to time you should use `vifmimg clean`.
 
-- You can see .docx and doc files now _(You need libreoffice)_
+- You can see \*.doc,\*.docx and doc files now
+- You can see \*.ppt,\*.pptx and prob all ms office files.
+
+
+**You need libreoffice**
+
+
 
 **Have fun!**
