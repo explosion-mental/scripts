@@ -7,7 +7,6 @@ There are 3 directories:
 - statusbar, specially for dwmblocks see voidrice from lukesmith
 
 
-
 The important ones are:
 
 ## termyt
