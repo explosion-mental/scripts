@@ -8,7 +8,6 @@ There are 3 directories:
 
 
 
-
 The important ones are:
 
 ## termyt
