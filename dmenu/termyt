@@ -11,10 +11,6 @@ user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Fi
 cachedir=/tmp/termyt	#for images and description
 #task=tsp		#task spooler
 
-#############
-# functions #
-#############
-
 # Help
 help_opt() {
 	#Check if necessary programs are installed
@@ -28,10 +24,10 @@ help_opt() {
 	printf "\ttermyt <search query>		takes input from the passed query using fzf\n"
 	printf "\ttermyt -r			takes input and prompts using dmenu/rofi\n"
 	printf "\ttermyt -t			After selecting the video, the thumbnails displays on sxiv\n"
-	printf "\ttermyt -T <quality>		Downloads thumbsnail for the query, by default on the worse quality so it downloads quickly\n"
+	printf "\ttermyt -T <quality>		Downloads thumbsnail for the query, by default on the worse quality so it downloads quickly.\n"
+	printf "\t				Possible values are: max - hq - mid - low\n"
 }
-# only one thumbnail, the selected one, before watching the video was the first use of this
-thumb_dl() {
+thumb_dl() { # only one thumbnail, the selected one, before watching the video was the first use of this
 	# check cache directory
 	[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 	curl -sL "$img/$id/$res" > "$cachedir"/"$id".jpg && sxiv -abp -s f "$cachedir"/"$id".jpg
@@ -45,8 +41,7 @@ choose() {
 	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 }
 
-# 30 thumbnails
-thumball() {
+thumball() { # 30 thumbnails
 	# check cache directory
 	[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
@@ -59,8 +54,7 @@ thumball() {
 }
 
 # Handle options
-while getopts ":h :g :r :t :T" opt; do
-#case "$1" in
+while getopts ":h :g :r :t :T:" opt; do
     case $opt in
 	h)
 	help_opt && exit 1	;;
@@ -69,22 +63,25 @@ while getopts ":h :g :r :t :T" opt; do
 	promptcmd="$guicmd $colors -p Video:"
 	#notifier=notify-send
 	[ -z "$query" ] && exit 1	;;
-	#notifier=notify-send	;;
 	t)
 	thumb=1
 	res="maxresdefault.jpg"	;;
 	T)
 	thumball=1
-	[ "$OPTARG" = " " ] && help_opt && exit 1
-	[ "$OPTARG" = "max" ] && res="maxresdefault.jpg"
-	[ "$OPTARG" = "hq"  ] && res="hqdefault.jpg"
-	[ "$OPTARG" = "mid" ] && res="mqdefault.jpg"
-	[ "$OPTARG" = "low" ] && res="sddefault.jpg"	;;
+	case "${@:$OPTARG}" in
+		max) res="maxresdefault.jpg" ;;
+		hq)  res="hqdefault.jpg" ;;
+		mid) res="mqdefault.jpg" ;;
+		low) res="sddefault.jpg" ;;
+		*) echo "Valid arguments are: max - hq - mid - low" && help_opt && exit 1
+	esac
+	;;
+	#[ "$OPTARG" = " " ] && help_opt && exit 1
 	#d) #Get description with youtube-dl
 	#description=1
 	#;;
 	?)
-	echo "Error! Invalid option!" && help_opt && exit 1	;;
+	echo "Error! Invalid option!" && help_opt && exit 1 ;;
     esac
 done
 # Removes all the options that have been parsed by getopts from the parameters
@@ -143,17 +140,7 @@ img="http://img.youtube.com/vi"
 [ -n "$thumb" ]  && choose && thumb_dl
 [ -n "$thumball" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose #&& dmeurl "$videolink$id"
 
-# Replace dmenurl with mpv
-[ "$id" -gt 11 ] && dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')"
-[ "$id" -gt 34 ] && dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')"
-#case $id in
-## the 'choice' variable as a second argument is to display it on a notification with dmenurl
-#		# 11 digit id = video
-#	???????????) dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
-#	#???????????) mpv "$videolink$id" "${choice// */}" ;;
-#		# 34 digit id = playlist
-#	??????????????????????????????????) dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
-#	#??????????????????????????????????) mpv "$playlink$id" "${choice// *//}" ;;
-#		*) exit ;;
-#esac
-#
+# The 'choice' variable as a second argument is to display it on a notification
+# with dmenurl. Replace dmenurl with mpv
+[ "${#id}" -ge 11 ] && dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')"
+[ "${#id}" -ge 34 ] && dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')"
