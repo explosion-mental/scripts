@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 # mpdnotification modified to not be a service and be active when I click music module or press the shortcut
 if [ "$MPD_HOST" ]; then HOST="$MPD_HOST"; else HOST="localhost"; fi

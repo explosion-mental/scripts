@@ -1,17 +1,15 @@
 #!/bin/sh
 
 # Variables
-defcmd=fzf
-#guicmd="rofi -dmenu -i" #uncomment next line for dmenu
 # youtube colors
 colors="-nb black -nf white -sb #E62117 -sf black -i -l 15"
-guicmd=dmenu
-promptcmd="$defcmd"
+guicmd=dmenu		#or use "rofi -dmenu -i"
+promptcmd=fzf
 # Why you wanna tell google you use linux?
 user_agent='Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:53.0) Gecko/20100101 Firefox/53.0'
 #user_agent='your bot 0.1'
 cachedir=/tmp/termyt	#for images and description
-task=tsp		#task spooler
+#task=tsp		#task spooler
 
 #############
 # functions #
@@ -29,41 +27,36 @@ help_opt() {
 	printf "\ttermyt				asks for input in stdin using fzf\n"
 	printf "\ttermyt <search query>		takes input from the passed query using fzf\n"
 	printf "\ttermyt -r			takes input and prompts using dmenu/rofi\n"
+	printf "\ttermyt -t			After selecting the video, the thumbnails displays on sxiv\n"
+	printf "\ttermyt -T <quality>		Downloads thumbsnail for the query, by default on the worse quality so it downloads quickly\n"
 }
 # only one thumbnail, the selected one, before watching the video was the first use of this
 thumb_dl() {
-	curl -sL "$img/$id/$res" > "$cachedir"/"$choice".jpg && sxiv -abp -s f "$cachedir"/"$choice".jpg
+	# check cache directory
+	[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+	curl -sL "$img/$id/$res" > "$cachedir"/"$id".jpg && sxiv -abp -s f "$cachedir"/"$id".jpg
 	rm "${cachedir:?}"/*
-	#; echo "$ids" > ~/yt
 }
+
 choose() {
 	echo "Choose Video/Playlist to play: "
-	choice=$(printf '%s' "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-	[ -z "$choice" ] && exit 		# if esc-ed then exit
+	choice=$(printf '%s' "$ids" | cut -d'	' -f2 | $promptcmd)	# dont show id
+	[ -z "$choice" ] && exit					# if esc-ed then exit
 	id=$(printf '%s' "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
 }
 
 # 30 thumbnails
 thumball() {
+	# check cache directory
+	[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 	echo "$ids" | awk '{print $1}' | sed "s,^,&$img/,;s,$,&/$res," > "$cachedir"/thumb.txt
 	while read -r URL; do
 		var=$((var + 1))
-	$task -nf curl -L "$URL" > "$cachedir"/"$(printf '%s' "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g").jpg";
+	curl -L "$URL" > "$cachedir"/"$(printf '%s' "$ids" | sed "${var}q;d" | cut -d'	' -f2 | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")".jpg
 	done < $cachedir/thumb.txt
-	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/* ; rm "${cachedir:?}"/*
+	notify-send "Finished⌛" && sxiv -bpt -s f $cachedir/*
+	rm "${cachedir:?}"/*
 }
-
-#		curl -sL "$URL" > "$cachedir/$(echo "$ids" | sed "${var}q;d" | awk '{print $1}').jpg";
-# The only problem here is that images don't appear in the "algorithm" order but does it really matter?
-#		curl -sL "$URL" > "$cachedir/$(echo -e "$ids" | tac | sed "${var}q;d" | cut -d'	' -f2).jpg";
-#choose_sxiv() {
-##	choice=$(echo -e "$ids" | cut -d'	' -f2 | $promptcmd) # dont show id
-#	#if [ -z "$choice" ]; then exit; fi	# if esc-ed then exit
-#	choice=$(sxiv -bpt -s f "$cachedir"/*)
-#	[ -z "$choice" ] && exit 		# if esc-ed then exit
-#	id=$(echo -e "$ids" | grep -Fwm1 "$choice" | cut -d'	' -f1) # get id of choice
-#	rm $cachedir/*
-#}
 
 # Handle options
 while getopts ":h :g :r :t :T" opt; do
@@ -74,7 +67,7 @@ while getopts ":h :g :r :t :T" opt; do
 	r)
 	query=$(echo | "$guicmd" $colors -p "🔎 Search: ")
 	promptcmd="$guicmd $colors -p Video:"
-	notifier=notify-send
+	#notifier=notify-send
 	[ -z "$query" ] && exit 1	;;
 	#notifier=notify-send	;;
 	t)
@@ -94,7 +87,9 @@ while getopts ":h :g :r :t :T" opt; do
 	echo "Error! Invalid option!" && help_opt && exit 1	;;
     esac
 done
-# Removes all the options that have been parsed by getopts from the parameters list, and so after that point, $1 will refer to the first non-option argument passed to the script.
+# Removes all the options that have been parsed by getopts from the parameters
+# list, and so after that point, $1 will refer to the first non-option argument
+# passed to the script.
 shift "$((OPTIND-1))"
 
 [ -z "$query" ] && if [ -z "$*" ]; then
@@ -114,10 +109,8 @@ query=$(echo "$query" | sed \
 	-e 's| |+|g')
 [ -z "$query" ] && exit
 
-# fetch the results with the $query and
-# delete all escaped characters
+# fetch the results with the $query and delete all escaped characters
 response="$(curl "https://www.youtube.com/results" -s -G --user-agent "$user_agent" --data-urlencode "search_query=$query" -H 'authority: www.youtube.com' -H 'accept-language: en-US,en;q=0.9' -L --compressed | sed 's|\\.||g')"
-#response="$(curl -s "https://www.youtube.com/results?search_query=$query" | sed 's|\\.||g')"
 
 # if unable to fetch the youtube results page, inform and exit (posix?)
 [ -z "$response" ] && print_error "\033[31mERROR[#02]: Couldn't find data on site.\033[0m\n" && exit 1
@@ -143,21 +136,24 @@ play_link="https://youtube.com/playlist?list="
 
 # Display thumbnail on sxiv
 img="http://img.youtube.com/vi"
-[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+
 
 #[ -n $description ] && youtube-dl "https://www.youtube.com/results?search_query=$query" --get-description >> "$cachedir"/description.TXT && setsid -f "$TERMINAL" -e less "$cachedir"/description.TXT
 [ -z "$thumb" ] && choose
 [ -n "$thumb" ]  && choose && thumb_dl
 [ -n "$thumball" ] && notify-send "Youtube📼" "Fetching all thumbnails\nPlease wait⏳..." && thumball && choose #&& dmeurl "$videolink$id"
 
-case $id in
-# the 'choice' variable as a second argument is to display it on a notification with dmenurl
-		# 11 digit id = video
-	???????????) dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
-	#???????????) mpv "$videolink$id" "${choice// */}" ;;
-		# 34 digit id = playlist
-	??????????????????????????????????) dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
-	#??????????????????????????????????) mpv "$playlink$id" "${choice// *//}" ;;
-		*) exit ;;
-esac
-
+# Replace dmenurl with mpv
+[ "$id" -gt 11 ] && dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')"
+[ "$id" -gt 34 ] && dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')"
+#case $id in
+## the 'choice' variable as a second argument is to display it on a notification with dmenurl
+#		# 11 digit id = video
+#	???????????) dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
+#	#???????????) mpv "$videolink$id" "${choice// */}" ;;
+#		# 34 digit id = playlist
+#	??????????????????????????????????) dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')" ;;
+#	#??????????????????????????????????) mpv "$playlink$id" "${choice// *//}" ;;
+#		*) exit ;;
+#esac
+#
