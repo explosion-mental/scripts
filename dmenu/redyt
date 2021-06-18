@@ -2,13 +2,13 @@
 
 guicmd="fzf --header="
 notifier="echo -e"
-#task="$(tsp -nf)"
+task="tsp -nf"
 # reddit colors (dmenu)
 colors="-nb #FF5700 -nf #CEE3F8 -sb #FF8b60 -sf #FF4500"
 # config file
 configdir="${XDG_CONFIG_HOME:-$HOME/.config}"
-# If subbreddit.txt does not exist, create it to prevent
-# the program from not functioning properly. Sleep 1.5 so its redable if using dmenu
+# If subbreddit.txt does not exist, create it to prevent the program from not
+# functioning properly. Sleep 1.5 so its redable if using dmenu
 defaultsub="linuxmemes"
 [ ! -f "$configdir/subreddit.txt" ] && "$notifier" "Creating $configdir/subreddit.txt" && sleep 1.5 && echo "$defaultsub" >> "$configdir/subreddit.txt"
 # Cache for images
@@ -48,15 +48,17 @@ while getopts ":h :r :o" opt; do
 	echo "Error! Invalid option!" && help_opt && exit 1	;;
     esac
 done
-# Removes all the options that have been parsed by getopts from the parameters list, and so after that point, $1 will refer to the first non-option argument passed to the script.
+# Removes all the options that have been parsed by getopts from the parameters
+# list, and so after that point, $1 will refer to the first non-option argument
+# passed to the script.
 shift "$((OPTIND-1))"
 
 # If no argument is passed
 [ -z "$subreddit" ] && if [ -z "$*" ]; then
 	# Ask the user to enter/select a subreddit
 	printf '%s\n' "Select Subreddit r/"
-	# Extra step so anything that doesn't match
-	# on fzf would still be stored
+	# Extra step so anything that doesn't match on fzf would still be
+	# stored
 	print_query="$($guicmd --print-query < "$configdir/subreddit.txt")"
 	query_head="$(echo "$print_query" | head -1)"
 	[ -z "$query_head" ] && query_head="$(echo "$print_query" | tail -1)"
@@ -72,13 +74,12 @@ fi
 [ -z $format_reddit ] && $notifier "Redyt" "📩 Downloading your 🤡Memes\n⏳Queuing $subreddit..."
 [ $format_reddit ] && $notifier "Redyt" "📩 Looking for posts on $subreddit"
 
-# Download/stream the subreddit feed containing only the
-# first 100 entries
+# Download/stream the subreddit feed containing only the first 100 entries
 limit=100
 user_agent="User-Agent: your bot 0.1"
 
 # Headers '-o' flag
-gap="                                                            "	#so url are non-visible
+gap="                                                            " # Big space so url are non-visible
 tab_space=$(printf '\t')
 
 if [ $format_reddit ]; then
@@ -98,7 +99,6 @@ if [ $format_reddit ]; then
 	while true; do	#prompts until you esc
 		media_url="$($guicmd"Select Post" < "$cachedir"/posts_headers.TXT |
 		while IFS= read line; do
-			# here was a space that got me debugging a lot xD
 			printf "%s" "${line##*$tab_space}"
 		done)"
 		[ -z "$media_url" ] && exit 1
@@ -106,8 +106,11 @@ if [ $format_reddit ]; then
 			*png|*jpg|*jpe|*jpeg|*JPG|*gif|*webp)
 			# Uncomment if you have sxiv patched with libcurl
 			#sxiv -abp -s f "$media_url"
-			curl -sL "$media_url" > "$cachedir"/"$(printf '%s' "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/*
-			rm "${cachedir:?}"/*
+			curl -sL "$media_url" > "$cachedir"/"$(printf '%s' "$media_url" | sed "s/.*\///;s/%20/ /g")" && sxiv -abp -s f "$cachedir"/"$(printf '%s' "$media_url" | sed "s/.*\///;s/%20/ /g")"
+
+			#rm "${cachedir:?}"/*.gif
+			# Delete all jpg or png or gif or jpeg
+			find "$cachedir" -maxdepth 1 -type f \( -name \*jpg -o -name \*png -o -name \*gif -o -name \*jpeg \) -delete
 			;;
 	*mkv|*webm|*mp4|*youtube.com/watch*|*youtube.com/playlist*|*youtu.be*|*hooktube.com*|*bitchute.com*)
 			mpv "$media_url"
@@ -115,9 +118,8 @@ if [ $format_reddit ]; then
 			*) # anything else with mpv. Does someone on
 			   # reddit share *pdf|*cvs...?
 			mpv --prefetch-playlist=yes \
-			--image-display-duration=5 $media_urls
+			--image-display-duration=5 $media_urls ;;
 		esac
-		sleep 10
     	done
 	rm "$cachedir"/posts_headers.TXT
 else
@@ -125,9 +127,9 @@ else
 	imgs=$(curl -s -G "https://www.reddit.com/r/$subreddit/$sortby.json" -d raw_json=1 -d limit="${limit}" -H "$user_agent" | jq -r '.data.children[].data | .url_overridden_by_dest' | sort -u)
 	[ -z "$imgs" ] && $notifier "Redyt" "sadly, there are no images for subreddit $subreddit, please try again later!😥" && exit 1
 
-#Uncomment for task spooler and dwmblock
-#kill -37 "$(pidof dwmblocks)" ; $task \
-wget -P "$cachedir" $imgs
+# Download images to $cachedir (use task spooler)
+kill -37 "$(pidof dwmblocks)"	# task module bar
+$task wget -P "$cachedir" $imgs
 
 $notifier "Redyt" "👍 Download Finished⌛, Enjoy <b>$subreddit</b> 😉"
 # Display the images and once finished, remove cache
