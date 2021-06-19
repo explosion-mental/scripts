@@ -1,9 +1,17 @@
 #!/usr/bin/env sh
 
+AUTO_REMOVE=1
+# By enabling this option the script will remove the preview file after it is drawn
+# and by doing so the preview will always be up-to-date with the file.
+# This however, requires more CPU and therefore affects the overall performance.
+
 export FIFO_UEBERZUG="/tmp/vifm-ueberzug-${PPID}"
 #export FIFO_UEBERZUG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifm-ueberzug-${PPID}"
 
-#[ ! -n "$DISPLAY" ] || [ ! -x $(command -v ueberzug >/dev/null 2>&1) ]
+# tty
+[ -z "$DISPLAY" ] && vifm "$@" && exit
+
+# only run if ueberzug installed
 [ ! -x "$(command -v ueberzug 2>&1)" ] && vifm "$@" && exit 1
 
 [ -e "$FIFO_UEBERZUG" ] || { mkfifo "$FIFO_UEBERZUG" || exit 1 ; }
@@ -14,3 +22,4 @@ vifm "$@"
 
 exec 3>&-
 rm "$FIFO_UEBERZUG" > /dev/null 2>&1
+[ "$AUTO_REMOVE" ] && vifmimg clean
