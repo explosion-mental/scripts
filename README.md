@@ -2,7 +2,7 @@
 Some usefull scripts or forks of (and of course Luke's scripts).
 
 There are 3 directories:
-- Divine; experiments, ideas, fun..✝️
+- Divine; experiments, ideas, fun..
 - dmenu, scripts that **can** use dmenu or **hardcoded** to dmenu
 - statusbar, specially for dwmblocks see voidrice from lukesmith
 
