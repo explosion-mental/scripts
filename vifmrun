@@ -1,27 +1,16 @@
 #!/usr/bin/env sh
+
 export FIFO_UEBERZUG="/tmp/vifm-ueberzug-${PPID}"
+#export FIFO_UEBERZUG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifm-ueberzug-${PPID}"
 
-# this should work with both local and global ueberzug install
-#if [ ! -x $(command -v ueberzug >/dev/null 2>&1) ]; then
-#	vifm
-#	exit
-#fi
-[ ! -x "$(command -v ueberzug 2>&1)" ] && vifm && exit
+#[ ! -n "$DISPLAY" ] || [ ! -x $(command -v ueberzug >/dev/null 2>&1) ]
+[ ! -x "$(command -v ueberzug 2>&1)" ] && vifm "$@" && exit 1
 
-cleanup() {
-    rm "$FIFO_UEBERZUG" 2>/dev/null	# this doesn't exist?
-    pkill -P $$ 2>/dev/null
-}
-#cleanup() {
-#    rm "$FIFO_UEBERZUG"	# this doesn't exist?
-#    pkill -P $$
-#}
-pkill -P $$ 2>/dev/null
-rm "$FIFO_UEBERZUG" 2>/dev/null
-mkfifo "$FIFO_UEBERZUG" >/dev/null
-trap cleanup EXIT 2>/dev/null
-#tail --follow "$FIFO_UEBERZUG" | ueberzug layer --silent --parser bash 2>&1 >/dev/null &
-tail --follow "$FIFO_UEBERZUG" | ueberzug layer -sp bash >/dev/null 2>&1 &
+[ -e "$FIFO_UEBERZUG" ] || { mkfifo "$FIFO_UEBERZUG" || exit 1 ; }
+ueberzug layer --parser json --silent < "$FIFO_UEBERZUG" &
+exec 3>"$FIFO_UEBERZUG"
 
 vifm "$@"
-cleanup
+
+exec 3>&-
+rm "$FIFO_UEBERZUG" > /dev/null 2>&1

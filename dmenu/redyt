@@ -15,9 +15,6 @@ defaultsub="linuxmemes"
 cachedir="/tmp/redyt"
 # If cachedir does not exist, create it
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-#############
-# functions #
-#############
 
 help_opt() {
 	#Check if necessary programs are installed

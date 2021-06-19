@@ -1,174 +1,160 @@
-#!/usr/bin/env bash
-readonly ID_PREVIEW="preview"
+#!/bin/sh
+
+# I removed the inc and dec functions and pdf page variable, if you want to
+# take a look at the second page better off opening zathura because it takes
+# long and its buggy
 
 PLAY_GIF="yes"
-# By enabling this option the GIF will be animated, by leaving it commented like it
-# is now will make the gif previews behave the same way as video previews.
+# By enabling this option the GIF will be animated, else it would show an image
+# (one frame).
 
-#AUTO_REMOVE="yes"
-# By enabling this option the script will remove the preview file after it is drawn
-# and by doing so the preview will always be up-to-date with the file.
-# This however, requires more CPU and therefore affects the overall performance.
-# MAYBE CHANGE TO VIEW?
+#PDF_PNG=1
+# uncomment to use png
+# Default behaviour is to use jpg (faster)
 
-# The messy code below is for moving pages in pdf files in the vifm file preview by
-# utilizing the < and > keys which will be bound to `vifmimg inc` or `vifmimg dec`.
-# and some weird bashism
-#PDF_PAGE_CONFIG="$HOME/.config/vifm/vifmimgpdfpage"
-#PDF_PAGE_CONFIG="$HOME/.config/vifm/vifmimgpdfpage"
-PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
-PDF_FILE_CONFIG="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg/vifmimgpdffile"
-PDF_PAGE=1
-PDF_FILE=""
-# cache on home dir scructure so it keeps after boots?
 cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg"
-#cachedir="/tmp/vifmimg"
+PDF_FILE_CONFIG="$cachedir"/.vifmimgpdffile.TXT
+PDF_FILE=""
+# cache on home dir scructure so it keeps after boots
 
-# Initialize the variables and required files
-[ -f "$PDF_PAGE_CONFIG" ] && PDF_PAGE=$(cat "$PDF_PAGE_CONFIG") || touch "$PDF_PAGE_CONFIG"
-[ -f "$PDF_FILE_CONFIG" ] && PDF_FILE=$(cat "$PDF_FILE_CONFIG") || touch "$PDF_FILE_CONFIG"
+# Initialize the variable and required files
+#[ -f "$PDF_FILE_CONFIG" ] && PDF_FILE=$(cat "$PDF_FILE_CONFIG") || touch "$PDF_FILE_CONFIG"
+if [ -f "$PDF_FILE_CONFIG" ]; then
+	PDF_FILE="$(cat "$PDF_FILE_CONFIG")"
+else
+	touch "$PDF_FILE_CONFIG"
+fi
 
-# Create temporary working directory if the directory structure doesn't exist
+# Create working directory if the directory doesn't exist
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 
 previewclear() {
-    declare -pA cmd=([action]=remove [identifier]="$ID_PREVIEW") > "$FIFO_UEBERZUG"
+printf '{ "action": "remove", "identifier": "%s" }\n' "$ID_PREVIEW" > "$FIFO_UEBERZUG"
 }
 
 fileclean() {
-   if [[ -f "$cachedir/$6.png" ]]; then
-        rm -f "${cachedir:?}/$6.png"
-    elif  [[ -d "$cachedir/$6/" ]]; then
-        rm -rf "${cachedir:?}/$6/"
-     fi
+[ -d "$cachedir" ] && rm -rf "${cachedir:?}"
 }
 
 preview() {
-    declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-	# how to make this work with the cachedir
-        [path]="$PWD/$6") \
-        > "$FIFO_UEBERZUG"
+{ printf '{ "action": "add", "identifier": "%s",'	"$ID_PREVIEW"
+  printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+  printf '"scaler": "fit_contain", "path": "%s" }\n'	"$PWD"/"$6"
+  } > "$FIFO_UEBERZUG"
 }
 
 previewvideo() {
-[ ! -f "$cachedir/$6.png" ] && ffmpegthumbnailer -i "$PWD/$6" -o "$cachedir/$6.png" -s 0 -q 10
-	declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-        [path]="$cachedir/$6.png") \
-        > "$FIFO_UEBERZUG"
+	[ ! -f "$cachedir"/"$6".png ] && ffmpegthumbnailer -i "$PWD"/"$6" -o "$cachedir"/"$6".png -s 0 -q 10
+
+{	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".png
+	} > "$FIFO_UEBERZUG"
 }
 
 previewepub() {
-[ ! -f "$cachedir/$6.png" ] && epub-thumbnailer "$6" "$cachedir/$6.png" 1024
-	declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-        [path]="$cachedir/$6.png") \
-        > "$FIFO_UEBERZUG"
+	[ ! -f "$cachedir"/"$6".png ] && epub-thumbnailer "$PWD"/"$6" "$cachedir"/"$6".png 1024
+
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".png
+	} > "$FIFO_UEBERZUG"
 }
 
 previewaudio() { # Do i need this?
-[ ! -f "$cachedir/$6.png" ] && ffmpeg -i "$6" "$cachedir/$6.png" -y &> /dev/null
-  declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-                     [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-                     [path]="$cachedir/$6.png") \
-    > "$FIFO_UEBERZUG"
+	[ ! -f "$cachedir"/"$6".png ] && ffmpeg -i "$6" "$cachedir"/"$6".png -y >/dev/null 2>&1
+
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".png
+	} > "$FIFO_UEBERZUG"
 }
 
 previewfont() { # what is this one?
-#  if [[ ! -f "/tmp${PWD}/$6.png" ]]; then
-#    fontpreview -i "$6" -o "/tmp${PWD}/$6.png"
-#  fi
-[ ! -f "$cachedir/$6.png" ] && fontpreview -i "$6" -o "$cachedir/$6.png"
-  declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-                     [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-                     [path]="$cachedir/$6.png") \
-			> "$FIFO_UEBERZUG"
+	[ ! -f "$cachedir"/"$6".png ] && fontpreview -i "$6" -o "$cachedir"/"$6".png
+
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".png
+	} > "$FIFO_UEBERZUG"
 }
 
 previewgif() {
-[ ! -d "$cachedir/$6/" ] && mkdir -p "$cachedir/$6/" ; convert -coalesce "$PWD/$6" "$cachedir/$6/$6.png"
-[ -n "$PLAY_GIF" ] && for frame in $(ls -1 $cachedir/$6/$6*.png | sort -V); do
-        declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-			[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-			[path]="$frame") \
-			> "$FIFO_UEBERZUG"
+[ ! -d "$cachedir"/"$6"/ ] && mkdir -p "$cachedir"/"$6"/ ; convert -coalesce "$PWD"/"$6" "$cachedir"/"$6"/"$6".png
+[ -n "$PLAY_GIF" ] &&
+
+#while true; do
+	for frame in $(find "$cachedir"/"$6" -maxdepth 1 -name '*.png' | sort -V); do
+	      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+		printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+		printf '"scaler": "fit_contain", "path": "%s" }\n'	"$frame"
+		} > "$FIFO_UEBERZUG"
             # Sleep between frames to make the animation smooth.
 	    # Make it infinite loop on gif?
-            sleep .07
+            		sleep .07
         done
+#done
+
 #  if you commented out then just view
-[ -z "$PLAY_GIF" ] && declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-			[x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-                	[path]="$cachedir/$6/$6-0.png") \
-                	> "$FIFO_UEBERZUG"
+[ -z "$PLAY_GIF" ] && {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+			printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+			printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6"/"$6"-0.png
+			} > "$FIFO_UEBERZUG"
 }
 
 previewpdf() {
-	# Should it convert the pdf-file to jpg or png? (jpg is faster!)
-	# PDF_PATH: The temporary path where the image is saved
-	if [ "$7" == "png" ]; then
-		PDF_TYPE="png"
-		PDF_PATH="$cachedir/$6.png"
-	else
-		PDF_TYPE="jpg"
-		PDF_PATH="$cachedir/$6"
-	fi
+[ "$6" != "$PDF_FILE" ] && rm -f "$cachedir"/"$6"
+#[ ! "$6" == "$PDF_FILE" ] && rm -f "$cachedir"/"$6"
 
-[ ! "$6" == "$PDF_FILE" ] &&
-        PDF_PAGE=1
-        echo 1 > "$PDF_PAGE_CONFIG"
- 	rm -f "${PDF_PATH:?}"
+[ ! -f "$cachedir/$6.jpg" ] && if [ "$PDF_PNG" ]; then
+		pdftoppm -f 1 -scale-to-y -1 -singlefile -png "$6" "$cachedir"/"$6"
+				else
+		pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$cachedir"/"$6"
+				fi
 
-if [ ! "$PDF_PAGE" == "1" ] && [ -f "$PDF_PATH.$PDF_TYPE" ]; then
-	rm -f "${PDF_PATH:?}"
-    fi
+# instead of file why not variables?...
+echo "$6" > "$PDF_FILE_CONFIG"
 
-[ ! -f "$PDF_PATH.$PDF_TYPE" ] &&
-		# convert it to jpeg or pdf?
-		if [[ $PDF_TYPE == "jpg" ]]; then
-        	pdftoppm -f 1 -l 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$PDF_PATH"
-		else
-			pdftoppm -png -f $PDF_PAGE -singlefile "$6" "$PDF_PATH"
-		fi
-    echo "$6" > "$PDF_FILE_CONFIG"
 
-    declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-#        [path]="/tmp$cachedir/$6.png") \
-	[path]="$PDF_PATH.$PDF_TYPE") \
-        > "$FIFO_UEBERZUG"
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".jpg
+	} > "$FIFO_UEBERZUG"
 }
 
+docxpreview() {
+[  "$6" != "$PDF_FILE" ] && rm -f "$cachedir/$6"
+#[ ! "$6" == "$PDF_FILE" ] && rm -f "$cachedir/$6"
 
-previewmagick() {
-[ ! -f "$cachedir/$6.png" ] && convert -thumbnail "$(identify -format "%wx%h" "$6")" "$PWD/$6" "$cachedir/$6.png"
-    declare -p -A cmd=([action]=add [identifier]="$ID_PREVIEW"
-        [x]="$2" [y]="$3" [width]="$4" [height]="$5" \
-        [path]="$cachedir/$6.png") \
-        > "$FIFO_UEBERZUG"
+# Using soffice (libreoffice commandline) to convert doc(x) to pdf
+[ ! -f "$cachedir"/"$6".jpg ] && soffice --headless --convert-to pdf "$6" --outdir "$cachedir" >/dev/null 2>&1 && pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$cachedir"/"$(noextname "$6")".pdf "$cachedir"/"$6"
+
+# Or just display it on text with --cat?
+# soffice --headless --cat "$6" --outputdir "$cachedir" 1&>/dev/null
+
+# or use pandoc?
+# pandoc "$6" "$(noextname "$6").pdf"
+
+# instead of file why not variables?...
+echo "$6" > "$PDF_FILE_CONFIG"
+
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".jpg
+	} > "$FIFO_UEBERZUG"
 }
 
-inc() {
-	VAL="$(cat "$PDF_PAGE_CONFIG")"
-	#echo "$(expr $VAL + 1)" > $PDF_PAGE_CONFIG
-	VAL=$((VAL + 1)) > "$PDF_PAGE_CONFIG"
-}
+previewmagick() { #is this one faster then normal?, maybe just lowering the resolution??
+[ ! -f "$cachedir"/"$6".png ] && convert -thumbnail "$(identify -format "%wx%h" "$6")" "$PWD"/"$6" "$cachedir"/"$6".png
 
-dec() {
-	VAL="$(cat "$PDF_PAGE_CONFIG")"
-	#echo "$(expr $VAL - 1)" > $PDF_PAGE_CONFIG
-	VAL=$((VAL - 1)) > "$PDF_PAGE_CONFIG"
-	[ $VAL -le 0 ] && echo 0 > "$PDF_PAGE_CONFIG"
-	#if [[ $VAL -le 0 ]]; then
-	#	echo 0 > $PDF_PAGE_CONFIG
-	#fi
+      {	printf '{ "action": "add", "identifier": "%s",'		"$ID_PREVIEW"
+	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
+	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$cachedir"/"$6".png
+	} > "$FIFO_UEBERZUG"
 }
 
 main() {
     case "$1" in
-        "inc") inc "$@" ;;
-        "dec") dec "$@" ;;
         "clear") previewclear "$@" ;;
         "clean") fileclean "$@" ;;
         "draw") preview "$@" ;;
@@ -176,10 +162,11 @@ main() {
         "epubpreview") previewepub "$@" ;;
         "gifpreview") previewgif "$@" ;;
         "pdfpreview") previewpdf "$@" ;;
+        "docxpreview") docxpreview "$@" ;;
         "magickpreview") previewmagick "$@" ;;
         "audiopreview") previewaudio "$@" ;;
         "fontpreview") previewfont "$@" ;;
-        *) echo "Unknown command: '$@'" ;;
+	*) echo "Unknown command: " "$@"
     esac
 }
 main "$@"
