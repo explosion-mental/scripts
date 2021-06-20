@@ -1,5 +1,12 @@
 #!/bin/sh
-desicion="$(dmenu -p "What you need" )
+_opt(){
+	printf "Tell me the future\n"
+	printf "Show me a miracle\n"
+	printf "etc"
+}
+
+
+decision="$(_opt | dmenu -p "What do you need")"
 CTD=\
 "pvkEAwE6rC0
 JY5AewSehn0
@@ -129,7 +136,4 @@ DlIHp1FcvwI
 59WQtUvrbtE
 7tRPoL705wU"
 
-#mpv "https://www.youtube.com/watch?v=$(shuf -n 1 "$CTD" --random-source=/dev/urandom)"
-#echo "https://www.youtube.com/watch?v=$(shuf -n 1 $HOME/CompleteTerryDavis.TXT --random-source=/dev/urandom)"
-#echo "https://www.youtube.com/watch?v=$(echo "$CTD" | shuf -n 1)"
-echo "https://www.youtube.com/watch?v=$(echo "$CTD" | shuf -n 1 --random-source=/dev/urandom)"
+[ "$decision" = "Show me a miracle" ] && mpv "https://www.youtube.com/watch?v=$(echo "$CTD" | shuf -n 1 --random-source=/dev/urandom)"
