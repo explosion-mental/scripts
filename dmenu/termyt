@@ -142,5 +142,5 @@ img="http://img.youtube.com/vi"
 
 # The 'choice' variable as a second argument is to display it on a notification
 # with dmenurl. Replace dmenurl with mpv
+[ "${#id}" -ge 34 ] && dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')" && exit
 [ "${#id}" -ge 11 ] && dmenurl "$video_link$id" "$(echo "$choice" | sed 's/ *//')"
-[ "${#id}" -ge 34 ] && dmenurl "$play_link$id" "$(echo "$choice" | sed 's/ *//')"
