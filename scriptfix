@@ -1,0 +1,15 @@
+#!/bin/dash
+
+# Replace #!/bin/sh -> #!/bin/dash
+# This saves to make a symlink to #!/bin/sh
+# Which on arch based sys breaks everything
+
+# Replace ( #!/bin/sh -> #!/bin/dash )
+find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/sh|\\#\\!\\/bin\\/dash|" {} +
+
+# Reverse ( #!/bin/dash -> #!/bin/sh )
+find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/dash|\\#\\!\\/bin\\/sh|" {} +
+
+# -i	write changes to the file
+# 1	first line
+# s	substitute
