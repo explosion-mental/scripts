@@ -1,7 +1,11 @@
+# Fork
+
+This is forked to worked with xclip. Everything is the same!
+
 [![Tests](https://img.shields.io/travis/cdown/clipmenu/develop.svg)](https://travis-ci.org/cdown/clipmenu)
 
 clipmenu is a simple clipboard manager using [dmenu][] (or [rofi][] with
-`CM_LAUNCHER=rofi`) and [xsel][].
+`CM_LAUNCHER=rofi`) and [xclip][].
 
 # Demo
 
@@ -73,7 +77,7 @@ package called `clipmenu`.
 
 If your distribution doesn't provide a package, you can manually install using
 `make install` (or better yet, create a package for your distribution!). You
-will need `xsel` and `clipnotify` installed, and also `dmenu` unless you plan
+will need `xclip` and `clipnotify` installed, and also `dmenu` unless you plan
 to use a different launcher.
 
 # How does it work?

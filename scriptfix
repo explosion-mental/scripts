@@ -3,13 +3,24 @@
 # Replace #!/bin/sh -> #!/bin/dash
 # This saves to make a symlink to #!/bin/sh
 # Which on arch based sys breaks everything
+# If you scripts are elsewhere but ~/.local/bin
+# I'm assuming you can modify this
 
+thisfile="$HOME/.local/bin/scriptfix"
+
+if [ "$(head -1 "$thisfile")" = "#!/bin/sh" ]; then
 # Replace ( #!/bin/sh -> #!/bin/dash )
-find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/sh|\\#\\!\\/bin\\/dash|" {} +
-
+	echo "Changing sh to dash"
+	echo "#!/bin/sh -> #!/bin/dash"
+	find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/sh|\\#\\!\\/bin\\/dash|" {} +
+elif [ "$(head -1 "$thisfile")" = "#!/bin/dash" ]; then
 # Reverse ( #!/bin/dash -> #!/bin/sh )
-find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/dash|\\#\\!\\/bin\\/sh|" {} +
+	echo "Changing dash to sh"
+	echo "#!/bin/dash -> #!/bin/sh"
+	find ~/.local/bin -type f -exec sed -i "1s|\\#\\!\\/bin\\/dash|\\#\\!\\/bin\\/sh|" {} +
+fi
 
 # -i	write changes to the file
 # 1	first line
 # s	substitute
+# vim: syntax=sh

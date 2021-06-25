@@ -1,6 +1,9 @@
-#!/bin/sh
+#!/bin/dash
 
 # This removes all possible metadata on a image
 # First argument is the file/regex
 
- exiftool -all= "$1" && exiftool -gps:all= "$1" && mogrify -strip "$1"
+# remove all exif (probably there are none)
+exif -all= "$1" && exif -gps:all= "$1"
+# remove all medata (may lower resolution)
+mogrify -strip "$1"
