@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # Replace #!/bin/sh -> #!/bin/dash
 # This saves to make a symlink to #!/bin/sh
