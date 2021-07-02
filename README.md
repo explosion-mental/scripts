@@ -65,12 +65,23 @@ Notification when used, I need help on improving time ( 0.6-0.9 secs ).
 If you use vifm consider taking a look at this.
 
 Remember from time to time you should use `vifmimg clean`.
+- You can see \*.doc,\*.docx, \*.ppt,\*.pptx and prob all 'ms' like office
+  files (You need **libreoffice**, it can be done with pandoc but I havent
+  implemented yet. _Manually_ uncomment the line of pandoc and comment the
+  soffice one).
+- Cleaner code
+- Prevented all word splitting issues
+- Added 'pid' option, which removes the vifm-ipc and vifm-ueberzug files which
+  are named pipes; when closing the terminal with a 'binding' other than _ZZ_
+  or _:q_ those files would not be removed.
+- Take a look at the first lines to fit your workflow
 
-- You can see \*.doc,\*.docx and doc files now
-- You can see \*.ppt,\*.pptx and prob all ms office files.
+## samedir
+samedir collection, which uses the current active window path.
+- samedir, terminal instance
+- samedirvifm, vifm instance
+- samedirmenu, lists files with dmenu and uses xdg-open to open them
 
-
-**You need libreoffice**
 
 
 
