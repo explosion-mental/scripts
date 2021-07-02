@@ -10,7 +10,7 @@ There are 3 directories:
 
 The important ones are:
 
-## termyt
+## (termyt)[https://github.com/explosion-mental/scripts/blob/main/dmenu/termyt]
 My 'simple' take on watching youtube. Use ytfzf if you are looking for more functionality.
 - -t flag for thumbnails
 
