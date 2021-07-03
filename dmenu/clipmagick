@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/dash
 # Make your clipboard thingys helpful
 
 menu() {
@@ -10,33 +10,38 @@ menu() {
 	printf "6.  [URL]   Play videos/audio in mpv🤟🎥\n"
 	printf "7.  [Text]  Search on....🦆\n"
 	printf "8.  [Text]  Convert text to QR image\n"
-	printf "9.  [Image] Save clipbaord image🔖\n"
-	printf "10.  [Shell] Run shell command on st🤖\n"
-	printf "11. [GOD]   Save godwords on your clipboard\n"
-	printf "12. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
+	printf "9.  [Text]  View on VIM\n"
+       printf "10. [Image] Save clipbaord image🔖\n"
+       printf "11. [Shell] Run shell command on st🤖\n"
+       printf "12. [GOD]   Save godwords on your clipboard\n"
+       printf "13. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
 }
 spell_failed() {
-notify-send "Error 404🤖"
-exit 1
+	notify-send "Error 404🤖"
+	exit 1
 }
 
 cachedir=/tmp
 #[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-# 'c' or 'clipboard'
-prompt=$(xclip -o -sel c | tr -d '\n')
-# Check if clipboard has something
-[ "$prompt" = "" ] && notify-send "Empty clipboard📎" && exit
-#[ "$prompt" = "" ] && clipmenu ; exit
-[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}" || prompt="$prompt"
-choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d. -f1)
+# remove tabs and new lines
+prompt=$(xclip -o -sel c | tr -d '\t' | tr -d '\n')
+# Check if clipboard has something, this doesn't work with images
+#[ -z "$prompt" ] && notify-send "Empty clipboard📎" && exit
+#{ [ "$prompt" = "" ] && clipmenu ;} & exit
+#[ "$prompt" = "" ] && notify-send "Empty clipboard📎" && exit
+
+# if the selected clipboard text is bigger than 30 chars, replaze all other
+# after the first 30 chars with '...'
+[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}" # || prompt="$prompt"
+choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d'.' -f1)
+#choice=$(menu | cut -f2| dmenu -p "$prompt" -i -l 20 | cut -d. -f1)
 cbtext=$(xclip -o -selection clipboard)
 
 case $choice in
     1)
         bookmenu "$cbtext"	;;
     2)
-        $BROWSER "$cbtext" &	;;
-    3)
+        $BROWSER "$cbtext" &	;; 3)
         qndl "$cbtext" || spell_failed	;;
     4)
         qndl "$cbtext" 'audio'	;;
@@ -50,39 +55,44 @@ case $choice in
         notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
         ;;
     6)
-        mpv "$cbtext" || spell_failed	;;
+	setsid -f mpv -quiet --title="Music" "$cbtext" || spell_failed
+	notify-send "🎥 Opening video..."	;;
     7)
 	$BROWSER "https://duckduckgo.com/?q=$cbtext" ;;
-    7)
-	qrencode -o $cachedir/tmpqrcode.png "$cbtext" && sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png ;;
+    8)
+	qrencode -o $cachedir/tmpqrcode.png "$cbtext" && \
+	sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png ;;
     9)
-        xclip -sel clipboard -t image/png -o > "$HOME"/Pictures/Saved/"$(date +'%Y_%m_%d_%I_%M_%p')".png || spell_failed	;;
+	setsid -f st -e printf '%s' "$cbtext" | nvim ;;#|| spell_failed	;;
+    10)
+        { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$(date +'%Y_%m_%d_%I_%M_%p')".png && \
+	sxiv "$HOME"/clipboard*.png ;} || spell_failed ;;
     11)
-	setsid -f st -e "$cbtext" || spell_failed	;;
-    13)
+	setsid -f st -e "$cbtext" #|| spell_failel #;;
+	read -r _ ;;
+    12)
 	godwords | xclip -sel c	;;
-    15)
+    13)
+echo "I'd just like to interject for a moment. What you’re referring to as
+Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus
+Linux. Linux is not an operating system unto itself, but rather another free
+component of a fully functioning GNU system made useful by the GNU corelibs,
+shell utilities and vital system components comprising a full OS as defined by
+POSIX.
 
-	echo "I'd just like to interject for a moment. What you’re referring to
-	as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling
-	it, GNU plus Linux. Linux is not an operating system unto itself, but
-	rather another free component of a fully functioning GNU system made
-	useful by the GNU corelibs, shell utilities and vital system components
-	comprising a full OS as defined by POSIX.
+Many computer users run a modified version of the GNU system every day, without
+realizing it. Through a peculiar turn of events, the version of GNU which is
+widely used today is often called \“Linux\”, and many of its users are not
+aware that it is basically the GNU system, developed by the GNU Project. There
+really is a Linux, and these people are using it, but it is just a part of the
+system they use.
 
-    Many computer users run a modified version of the GNU system every day,
-    without realizing it. Through a peculiar turn of events, the version of GNU
-    which is widely used today is often called “Linux”, and many of its users
-    are not aware that it is basically the GNU system, developed by the GNU
-    Project. There really is a Linux, and these people are using it, but it is
-    just a part of the system they use.
-
-    Linux is the kernel: the program in the system that allocates the machine’s
-    resources to the other programs that you run. The kernel is an essential
-    part of an operating system, but useless by itself; it can only function in
-    the context of a complete operating system. Linux is normally used in
-    combination with the GNU operating system: the whole system is basically
-    GNU with Linux added, or GNU/Linux. All the so-called “Linux” distributions
-    are really distributions of GNU/Linux." | xclip -sel c ;;
+Linux is the kernel: the program in the system that allocates the machine’s
+resources to the other programs that you run. The kernel is an essential part
+of an operating system, but useless by itself; it can only function in the
+context of a complete operating system. Linux is normally used in combination
+with the GNU operating system: the whole system is basically GNU with Linux
+added, or GNU/Linux. All the so-called \“Linux\” distributions are really
+distributions of GNU/Linux." | xclip -sel c ;;
 
 esac
