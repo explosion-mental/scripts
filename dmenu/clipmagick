@@ -11,7 +11,8 @@ menu() {
 	printf "7.  [Text]  Search on....🦆\n"
 	printf "8.  [Text]  Convert text to QR image\n"
 	printf "9.  [Text]  View on VIM\n"
-       printf "10. [Image] Save clipbaord image🔖\n"
+       printf "10. [Text]  Put something on your clipboard\n"
+       printf "10. [Image] Save clipboard image🔖\n"
        printf "11. [Shell] Run shell command on st🤖\n"
        printf "12. [GOD]   Save godwords on your clipboard\n"
        printf "13. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
@@ -52,8 +53,7 @@ case $choice in
         output=$(curl -s -F"shorten=$cbtext" 0x0.st)
         [ "$output" = "Segmentation fault" ] && spell_failed
         echo "$output" | xclip -sel c &&
-        notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
-        ;;
+        notify-send "Shorten Link is in Clipboard" "<i>$output</i>" ;;
     6)
 	setsid -f mpv -quiet --title="Music" "$cbtext" || spell_failed
 	notify-send "🎥 Opening video..."	;;
@@ -65,14 +65,17 @@ case $choice in
     9)
 	setsid -f st -e printf '%s' "$cbtext" | nvim ;;#|| spell_failed	;;
     10)
-        { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$(date +'%Y_%m_%d_%I_%M_%p')".png && \
-	sxiv "$HOME"/clipboard*.png ;} || spell_failed ;;
+    	printf | dmenu | xclip -i -sel c ;;
     11)
+    	d="$(date +'%d-%m_%I_%M_%S')"
+        { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \
+	sxiv "$HOME"/clipboard"$d".png ;} || spell_failed ;;
+    12)
 	setsid -f st -e "$cbtext" #|| spell_failel #;;
 	read -r _ ;;
-    12)
-	godwords | xclip -sel c	;;
     13)
+	godwords | xclip -sel c	;;
+    14)
 echo "I'd just like to interject for a moment. What you’re referring to as
 Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus
 Linux. Linux is not an operating system unto itself, but rather another free
