@@ -3,6 +3,7 @@
 # Music module
 # Signal 11
 #filter() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
+# can it work with mpc current??
 filter="$(mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;)"
 onlytitle() { mpc --format %title% | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
 
@@ -13,9 +14,9 @@ pidof -x sb-mpdup >/dev/null 2>&1 || sb-mpdup >/dev/null 2>&1 &
 
 case $BLOCK_BUTTON in
 	1) mpc toggle ;;	# right click, pause/unpause
-	2) setsid -f "$TERMINAL" -e ncmpcpp -s visualizer ;;  # open music player
-	3) mpdnoti ;;		# Notification with album cover(time 0.10,0.7)
-	#4) mpc prev ;;		# scroll up, previous
-	#5) mpc next ;;		# scroll down, next
+	2) setsid -f "$TERMINAL" -e ncmpcpp -s visualizer ;;  # middle click, music player
+	3) mpdnoti  ;;		# Notification with album cover
+	4) mpc next ;;		# scroll down, next
+	5) mpc prev ;;		# scroll up, previous
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
