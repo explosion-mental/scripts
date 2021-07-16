@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # Open a vifm window instance in the same directory as the currently active window.
 

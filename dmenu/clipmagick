@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 # Make your clipboard thingys helpful
 
 menu() {
@@ -12,18 +12,19 @@ menu() {
 	printf "8.  [Text]  Convert text to QR image\n"
 	printf "9.  [Text]  View on VIM\n"
        printf "10. [Text]  Put something on your clipboard\n"
-       printf "10. [Image] Save clipboard image🔖\n"
-       printf "11. [Shell] Run shell command on st🤖\n"
-       printf "12. [GOD]   Save godwords on your clipboard\n"
-       printf "13. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
+       printf "11. [Text]  Upload to 0x0.st\n"
+       printf "12. [Image] Save clipboard image🔖\n"
+       printf "13. [Image] Upload to 0x0.st\n"
+       printf "14. [Shell] Run shell command on st🤖\n"
+       printf "15. [GOD]   Save godwords on your clipboard\n"
+       printf "16. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
 }
-spell_failed() {
-	notify-send "Error 404🤖"
-	exit 1
-}
+spell_failed() { notify-send "Clipmagick" "Error 404🤖" ; exit 1 ;}
 
 cachedir=/tmp
 #[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+
+# FORMATING
 # remove tabs and new lines
 prompt=$(xclip -o -sel c | tr -d '\t' | tr -d '\n')
 # Check if clipboard has something, this doesn't work with images
@@ -39,43 +40,72 @@ choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d'.' -f1)
 cbtext=$(xclip -o -selection clipboard)
 
 case $choice in
-    1)
-        bookmenu "$cbtext"	;;
-    2)
-        $BROWSER "$cbtext" &	;; 3)
-        qndl "$cbtext" || spell_failed	;;
-    4)
-        qndl "$cbtext" 'audio'	;;
+    1)	#Save as bookmark📑
+        bookmenu "$cbtext"
+	;;
+    2)	#Open on Browser🦊
+        $BROWSER "$cbtext" &
+	;;
+    3)	#Download file📥
+        qndl "$cbtext" || spell_failed
+	;;
+    4)	#Download yt audio🎧
+        qndl "$cbtext" 'audio'
 	#notify-send "⏳ Downloading audio..." "<i><u>'$(basename "$1")'</i></u>..."
 	#tsp -nf youtube-dl "$1" --add-metadata -icxf bestaudio/best --exec "mv {} $HOME/Downloads"
-    5)
+	;;
+    5)	#Shorten url✂️
         notify-send "Cutting...✂️"
         output=$(curl -s -F"shorten=$cbtext" 0x0.st)
         [ "$output" = "Segmentation fault" ] && spell_failed
         echo "$output" | xclip -sel c &&
-        notify-send "Shorten Link is in Clipboard" "<i>$output</i>" ;;
-    6)
+        notify-send "Shorten Link is in Clipboard" "<i>$output</i>"
+	;;
+    6)	#Play videos/audio in mpv
 	setsid -f mpv -quiet --title="Music" "$cbtext" || spell_failed
-	notify-send "🎥 Opening video..."	;;
-    7)
-	$BROWSER "https://duckduckgo.com/?q=$cbtext" ;;
-    8)
+	notify-send "🎥 Opening video..."
+	;;
+    7)	#Search on....🦆
+	$BROWSER "https://duckduckgo.com/?q=$cbtext"
+	;;
+    8)	#Convert text to QR image
 	qrencode -o $cachedir/tmpqrcode.png "$cbtext" && \
-	sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png ;;
-    9)
-	setsid -f st -e printf '%s' "$cbtext" | nvim ;;#|| spell_failed	;;
-    10)
-    	printf | dmenu | xclip -i -sel c ;;
-    11)
-    	d="$(date +'%d-%m_%I_%M_%S')"
+	sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png
+	;;
+    9)	#View on VIM
+	#still doesn't work..
+	setsid -f st -e printf '%s' "$cbtext" | nvim
+	;;#|| spell_failed	;;
+    10)	#Put something on your clipboard
+    	printf | dmenu | xclip -i -sel c
+	;;
+    11)	#Upload to 0x0.st
+    	up_file=$cachedir/tmpclipboard
+	xclip -o -selection clipboard > $up_file
+	curl --silent -F "file=@$up_file" https://0x0.st | xclip -sel c
+	rm $up_file
+	notify-send "URL copied to your clipboard" "$cbtext"
+	;;
+    12)	#Save clipboard image🔖
+    	d=$(date +'%d-%m_%I_%M_%S')
         { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \
-	sxiv "$HOME"/clipboard"$d".png ;} || spell_failed ;;
-    12)
+	sxiv "$HOME"/clipboard"$d".png ;} || spell_failed
+	;;
+    13)	#Upload to 0x0.st
+    	up_file=$cachedir/tmpclipboard.png
+	xclip -sel clipboard -t image/png -o > $up_file
+	curl --silent -F "file=@$up_file" https://0x0.st | xclip -sel c
+	rm $up_file
+	notify-send "URL copied to your clipboard" "$cbtext"
+	;;
+    14)	#Run shell command on st
 	setsid -f st -e "$cbtext" #|| spell_failel #;;
-	read -r _ ;;
-    13)
-	godwords | xclip -sel c	;;
-    14)
+	read -r _
+	;;
+    15)	#Save godwords on your clipboard
+	godwords | xclip -sel c
+	;;
+    16)	# GNU/Linux!
 echo "I'd just like to interject for a moment. What you’re referring to as
 Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus
 Linux. Linux is not an operating system unto itself, but rather another free
@@ -97,5 +127,4 @@ context of a complete operating system. Linux is normally used in combination
 with the GNU operating system: the whole system is basically GNU with Linux
 added, or GNU/Linux. All the so-called \“Linux\” distributions are really
 distributions of GNU/Linux." | xclip -sel c ;;
-
 esac

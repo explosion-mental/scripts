@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # This removes all possible metadata on a image
 # First argument is the file/regex
