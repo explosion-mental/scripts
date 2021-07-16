@@ -81,22 +81,25 @@ case $choice in
 	;;
     11)	#Upload to 0x0.st
     	up_file=$cachedir/tmpclipboard
-	xclip -o -selection clipboard > $up_file
-	curl --silent -F "file=@$up_file" https://0x0.st | xclip -sel c
+	xclip -selection clipboard > $up_file
+	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
+        [ "$output" = "Segmentation fault" ] && spell_failed
+        echo -n "$output" | xclip -sel c && \
+	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
-	notify-send "URL copied to your clipboard" "$cbtext"
 	;;
     12)	#Save clipboard image🔖
     	d=$(date +'%d-%m_%I_%M_%S')
-        { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \
-	sxiv "$HOME"/clipboard"$d".png ;} || spell_failed
+        { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \ sxiv "$HOME"/clipboard"$d".png ;} || spell_failed
 	;;
     13)	#Upload to 0x0.st
     	up_file=$cachedir/tmpclipboard.png
 	xclip -sel clipboard -t image/png -o > $up_file
-	curl --silent -F "file=@$up_file" https://0x0.st | xclip -sel c
+	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
+        [ "$output" = "Segmentation fault" ] && spell_failed
+        echo -n "$output" | xclip -sel c && \
+	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
-	notify-send "URL copied to your clipboard" "$cbtext"
 	;;
     14)	#Run shell command on st
 	setsid -f st -e "$cbtext" #|| spell_failel #;;
