@@ -1,7 +1,11 @@
 #!/bin/sh
+
+# A script that gives you strength of wifi
+# dependencies: iwconfig
+
 dev=$(iw dev | grep Interface | sed s/Interface//)
-stngth=`iwconfig $dev | awk -F '=' '/Quality/ {print $2}' | cut -d '/' -f 1`
-bars=`expr $stngth / 10`
+stngth=$(iwconfig $dev | awk -F '=' '/Quality/ {print $2}' | cut -d '/' -f 1)
+bars=$((stngth / 10))
 
 case $bars in
     0)  bar='[----------]' ;;
