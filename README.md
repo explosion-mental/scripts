@@ -1,11 +1,10 @@
 # scripts
-Some usefull scripts or forks of (and of course Luke's scripts).
+Useful scripts (made by hand or forked from) and some of Luke's scripts.
 
 There are 3 directories:
 - Divine; experiments, ideas, fun..
 - dmenu, scripts that **can** use dmenu or **hardcoded** to dmenu
-- statusbar, specially for dwmblocks see voidrice from lukesmith
-
+- statusbar, these ones shows information really good for most statusbar
 
 
 The important ones are:
@@ -17,8 +16,9 @@ My 'simple' take on watching youtube. Use ytfzf if you are looking for more func
 **Use** `termyt -h`
 
 ## dmenurl
-I got this from Luke's scripts but I can't find it anymore, I made some changes
-and this is some kind of handler.
+display what you want to do with the current argument (either a file, url or whatever).
+
+_kinda deprecated since I only find it useful on termyt_
 
 ## [redyt](https://github.com/explosion-mental/scripts/blob/main/dmenu/redyt)
 Bugswriter script, really cool!
