@@ -41,7 +41,8 @@ list_clips() {
 #	esac
 #}
 
-chosen_line=$(list_clips | sed 's/^\t*//' | uniq |dmenu "${launcher_args[@]}" "$@")
+#chosen_line=$(list_clips | sed 's/^\t*//' | uniq |dmenu "${launcher_args[@]}" "$@")
+chosen_line=$(list_clips | uniq | dmenu "${launcher_args[@]}" "$@")
 
 
 [[ $chosen_line ]] || exit 1
