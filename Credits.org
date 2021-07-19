@@ -1,0 +1,7 @@
+#+title: Credits for scripts
+|----------+------------+------------------|
+| Script   | Creator    | Original License |
+|----------+------------+------------------|
+| [[https://github.com/explosion-mental/scripts/blob/main/statusbar/sb-clock][sb-clock]] | [[https://lukesmith.xyz][Luke Smith]] | GPL v3           |
+| [[https://github.com/explosion-mental/scripts/blob/main/statusbar/sb-disk][sb-disk]]  | [[https://lukesmith.xyz][Luke Smith]] | GPL v3           |
+|----------+------------+------------------|
