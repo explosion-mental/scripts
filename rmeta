@@ -5,5 +5,5 @@
 
 # remove all exif (probably there are none)
 exif -all= "$1" && exif -gps:all= "$1"
-# remove all medata (may resolution)
+# remove all medata (may lower resolution)
 mogrify -strip "$1"

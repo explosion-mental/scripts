@@ -34,7 +34,15 @@ list_clips() {
     LC_ALL=C sort -rnk 1 < "$cache_file" | cut -d' ' -f2- | awk '!seen[$0]++'
 }
 
-chosen_line=$(list_clips | uniq | dmenu "${launcher_args[@]}" "$@")
+#tab_filter() {
+#	tab=$(printf '\t') # or tab='   ' # (a real tab character)
+#	case $outline in
+#	  ("${tab}"*)  tr '\t' '\0'
+#	esac
+#}
+
+chosen_line=$(list_clips | sed 's/^\t*//' | uniq |dmenu "${launcher_args[@]}" "$@")
+
 
 [[ $chosen_line ]] || exit 1
 file=$cache_dir/$(cksum <<< "$chosen_line")
