@@ -1,4 +1,25 @@
 #!/bin/sh
+#
+# This Script binds:
+# - AltGr + h/j/k/l to arrow keys
+# - AltGr + Shift + j/k -> Home/End
+# - Capslock as backspace (useful on scenarios outside vim)
+# - Swaps Atl and AltGr
+# - Normal Alt is bound to </> key
+#
+# Default keyboard:
+#  Esc f1 f2 f3 f4  f5 f6 f7 f8  f9 fA fB fC  Ps  Sl  Pa
+#
+#   ~ 1  2  3  4  5  6  7  8  9  0  -  =  <<  |  In  Ho  Pu  Nl /  *  -
+#                                             |
+#  Tab  q  w  e  r  t  y  u  i  o  p  [  ]  \ |  De  En  Pd  7H 8^ 9U +
+#                                             |                       +
+#  <<   a  s  d  f  g  h  j  k  l  ;  '  Entr |              4< 5  6> +
+#                                             |
+#   Shft z  x  c  v  b  n  m  ,  .  /  Shift  |      ^       1E 2v 3D E
+#                                             |                       n
+#   Ctl Win AltGr  S p a c e  Ctl Alt Mod Ctl | <   v   >    0Ins  .D t
+
 #notify-send -t 2400 "Keyboard remapping⌨️ " "WAIT!\nRerunning <b>customs</b> shorcuts"
 
 # altgr variant to be able to have arrow keys on vim key when pressed

@@ -6,7 +6,7 @@
 # If you scripts are elsewhere but ~/.local/bin
 # I'm assuming you can modify this
 
-thisfile="$HOME/.local/bin/scriptfix"
+thisfile="$HOME"/.local/bin/scriptfix
 
 if [ "$(head -1 "$thisfile")" = "#!/bin/sh" ]; then
 # Replace ( #!/bin/sh -> #!/bin/dash )

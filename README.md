@@ -61,7 +61,19 @@ _NOTE:_ The `'audio'` flag its the only one, Why don't directly write the youtub
 ## [mpdonti](https://github.com/explosion-mental/scripts/blob/main/statusbar/mpdnoti)
 Notification when used, I need help on making it POSIX.
 
-## [vifmimg](https://github.com/explosion-mental/scripts/blob/main/vifmimg)
+## samedir
+samedir collection, which uses the current active window path.
+- [samedir](https://github.com/explosion-mental/scripts/blob/main/samedir),
+  terminal instance
+- [samedirvifm](https://github.com/explosion-mental/scripts/blob/main/samedirvifm),
+  vifm instance
+- [samedirmenu](https://github.com/explosion-mental/scripts/blob/main/dmenu/samedirmenu),
+  lists files with dmenu and uses xdg-open to open them.
+
+
+## Vifm image previews
+- [vifmimg](https://github.com/explosion-mental/scripts/blob/main/vifmimg)
+- [vifmrun](https://github.com/explosion-mental/scripts/blob/main/vifmrun)
 If you use vifm consider taking a look at this.
 
 Remember from time to time you should use `vifmimg clean`.
@@ -75,16 +87,6 @@ Remember from time to time you should use `vifmimg clean`.
   are named pipes; when closing the terminal with a 'binding' other than _ZZ_
   or _:q_ those files would not be removed.
 - Take a look at the first lines to fit your workflow
-
-## samedir
-samedir collection, which uses the current active window path.
-- [samedir](https://github.com/explosion-mental/scripts/blob/main/samedir),
-  terminal instance
-- [samedirvifm](https://github.com/explosion-mental/scripts/blob/main/samedirvifm),
-  vifm instance
-- [samedirmenu](https://github.com/explosion-mental/scripts/blob/main/dmenu/samedirmenu),
-  lists files with dmenu and uses xdg-open to open them
-
 
 
 **Have fun!**

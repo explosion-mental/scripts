@@ -1,0 +1,6 @@
+#!/bin/dash
+
+# A wrapper for firefox private mode
+# so its possible to open it on dmenu
+
+firefox --private-window
