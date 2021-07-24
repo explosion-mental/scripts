@@ -16,13 +16,13 @@ do
     #echo -e "$fullpath:\n\tdir  = \"$dir\"\n\tbase = \"$base\"\n\text  = \"$ext\""
    # echo "$ext"
 help_opt() {
-        echo "noextname [OPTIONS] FILE"
-        echo "OPTIONS:"
-        echo "\t-f     Print the full path of the file"
-        echo "\t-d     Print the directory the file is in"
-        echo "\t-b     Print the name of the file without the file extension"
-        echo "\t-h     Print this Help."
-	echo "By default it prints basename of the file without the extension"
+        printf "noextname [OPTIONS] FILE"
+        printf "OPTIONS:"
+        printf "\t-f     Print the full path of the file"
+        printf "\t-d     Print the directory the file is in"
+        printf "\t-b     Print the name of the file without the file extension"
+        printf "\t-h     Print this Help."
+	printf "By default it prints basename of the file without the extension"
 }
 
 done
