@@ -15,11 +15,22 @@ do
 
     #echo -e "$fullpath:\n\tdir  = \"$dir\"\n\tbase = \"$base\"\n\text  = \"$ext\""
    # echo "$ext"
+help_opt() {
+        echo "noextname [OPTIONS] FILE"
+        echo "OPTIONS:"
+        echo "\t-f     Print the full path of the file"
+        echo "\t-d     Print the directory the file is in"
+        echo "\t-b     Print the name of the file without the file extension"
+        echo "\t-h     Print this Help."
+	echo "By default it prints basename of the file without the extension"
+}
+
 done
 case "$1" in
-	-f) echo "$fullpath"	;;
-	-d) echo "$dir"		;;
-	-b) echo "$base"	;;
-	 *) echo "$ext"		;;
+	-f) printf '%s' "$fullpath"	;;
+	-d) printf '%s' "$dir"		;;
+	-e) printf '%s' "$ext"		;;
+	-h) help_opt && exit 0		;;
+	 *) printf '%s' "$base"		;;
 esac
 
