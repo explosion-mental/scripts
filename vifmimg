@@ -22,9 +22,8 @@ image() {
 }
 
 # if the file doesn't exist and doesn't have a size more than 0, also sets "$1"
-# to be clear so it doesn't try to make the preview (only run if the sixth
-# argument exist)
-[ -n "$6" ] && [ ! -s "$6" ] && echo "The file doesn't exist and it's size is not greater than zero, exiting..." && set -- "clear"
+# to be clear so it doesn't try to make the preview
+[ -n "$6" ] && [ ! -s "$6" ] && echo "The file doesn't exist or it's size is not greater than zero, exiting..." && set -- "clear"
 
 case "$1" in
 	"pid")	# sometimes you killed the windows in any other way and the
@@ -41,8 +40,8 @@ case "$1" in
 		image "$1" "$2" "$3" "$4" "$5" "$PWD"/"$6"		;;
 	"videopreview")
 		# ffmpegthumbnailer uses by default the extension of the name (-o) jpg/png
-		[ ! -f "$img_sum".png ] && \
-			ffmpegthumbnailer -i "$6" -o "$img_sum".jpg -s 0 -q 10
+		[ ! -f "$img_sum".jpg ] && \
+			ffmpegthumbnailer -i "$6" -o "$img_sum".jpg -s 0 -q 10 2>/dev/null
 		image "$1" "$2" "$3" "$4" "$5" "$img_sum".jpg	;;
 	"epubpreview")
 		[ ! -f "$img_sum".png ] && epub-thumbnailer "$6" "$img_sum".png 1024
