@@ -76,17 +76,19 @@ samedir collection, which uses the current active window path.
 - [vifmrun](https://github.com/explosion-mental/scripts/blob/main/vifmrun)
 If you use vifm consider taking a look at this.
 
-Remember from time to time you should use `vifmimg clean`.
+Remember from time to time you should use `vifmimg remove` (which removes the
+cache).
 - You can see \*.doc,\*.docx, \*.ppt,\*.pptx and prob all 'ms' like office
   files (You need **libreoffice**, it can be done with pandoc but I havent
   implemented yet. _Manually_ uncomment the line of pandoc and comment the
   soffice one).
 - Cleaner code
 - Prevented all word splitting issues
-- Added 'pid' option, which removes the vifm-ipc and vifm-ueberzug files which
-  are named pipes; when closing the terminal with a 'binding' other than _ZZ_
-  or _:q_ those files would not be removed.
-- Take a look at the first lines to fit your workflow
+- Added 'pid' option, which removes the vifm-ipc and vifm-ueberzug files (on
+  /tmp) which are named pipes; when closing the terminal with a 'binding' other
+  than _ZZ_ or _:q_ those files would not be removed.
+- Two configurable variables on vifmimg.
+- It uses cksum to see whether the file was modified.
 
 
 **Have fun!**
