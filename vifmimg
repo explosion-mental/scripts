@@ -5,71 +5,82 @@ PLAY_GIF="yes"
 # (one frame).
 
 #PDF_PNG=1
-# uncomment to use png
-# Default behaviour is to use jpg ('faster')
+# Uncomment to use png. Default behaviour is to use jpg (faster).
 
-cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}/vifmimg"
+cachedir="${XDG_CACHE_HOME:-$HOME/.cache/}"/vifmimg
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+# Checks if the file has any modifications before preview
+#pwd_sum="$cachedir"/"$(stat --printf '%n\0%i\0%F\0%s\0%W\0%Y' -- "$(readlink -f "$PWD"/"$6")" | sha256sum | awk '{print $1}')"
+img_sum="$cachedir"/"$(stat --printf '%n\0%i\0%F\0%s\0%W\0%Y' -- "$(readlink -f "$PWD"/"$6")" | sha256sum | awk '{print $1}')"
 
 image() {
       {	printf '{ "action": "add", "identifier": "vifm-preview",'
 	printf '"x": %d, "y": %d, "width": %d, "height": %d,'	"$2" "$3" "$4" "$5"
 	printf '"scaler": "fit_contain", "path": "%s" }\n'	"$6"
 	} > "$FIFO_UEBERZUG"
+	#printf '"scaler": "forced_cover", "path": "%s" }\n'	"$6"
 }
+
+# if the file doesn't exist and doesn't have a size more than 0, also sets "$1"
+# to be clear so it doesn't try to make the preview
+[ ! -s "$6" ] && echo "The file doesn't exist and it's size is not greater than zero, exiting..." && set -- "clear"
 
 case "$1" in
 	"pid")	# sometimes you killed the windows in any other way and the
-		# named pipe's stay
+		# named pipes stay
 		#find /tmp -name "^vifm-*" -type p
-		find /tmp -maxdepth 1 -name 'vifm-*' -type p -delete
+		find /tmp -maxdepth 1 -name 'vifm-*' -type p -delete #&& \
+		echo 'Cleaning vifm named pipes...'
 		;;
-        "clean")
+        "remove")
 		[ -d "$cachedir" ] && rm -rf "${cachedir:?}"		;;
 	"clear")
 		echo '{"action": "remove", "identifier": "vifm-preview"}' > "$FIFO_UEBERZUG" ;;
 	"draw")
 		image "$1" "$2" "$3" "$4" "$5" "$PWD"/"$6"		;;
 	"videopreview")
-		[ ! -f "$cachedir"/"$6".png ] && \
-			ffmpegthumbnailer -i "$PWD"/"$6" -o "$cachedir"/"$6".png -s 0 -q 10
-		image "$1" "$2" "$3" "$4" "$5" "$cachedir/$6.png"	;;
+		# ffmpegthumbnailer uses by default the extension of the name (-o) jpg/png
+		[ ! -f "$img_sum".png ] && \
+			ffmpegthumbnailer -i "$6" -o "$img_sum".jpg -s 0 -q 10
+		image "$1" "$2" "$3" "$4" "$5" "$img_sum".jpg	;;
 	"epubpreview")
-		[ ! -f "$cachedir"/"$6".png ] && epub-thumbnailer "$PWD"/"$6" "$cachedir"/"$6".png 1024
-		image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6".png	;;
+		[ ! -f "$img_sum".png ] && epub-thumbnailer "$6" "$img_sum".png 1024
+		image "$1" "$2" "$3" "$4" "$5" "$img_sum".png	;;
 	"gifpreview")
-		{ [ ! -d "$cachedir"/"$6"/ ] && mkdir -p "$cachedir"/"$6"/ ;} \
-			&& convert -coalesce "$PWD"/"$6" "$cachedir"/"$6"/"$6".png
-		[ -z "$PLAY_GIF" ] && image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6"/"$6"-0.png
+		{ [ ! -d "$img_sum"/ ] && mkdir -p "$img_sum"/ ;} \
+			&& convert -coalesce "$6" "$img_sum"/"$6".png
+		[ -z "$PLAY_GIF" ] && image "$1" "$2" "$3" "$4" "$5" "$img_sum"/"$6"-0.png
 		[ -n "$PLAY_GIF" ] && \
-		for frame in $(find "$cachedir"/"$6" -maxdepth 1 -name '*.png' | sort -V); do
+		for frame in $(find "$img_sum" -maxdepth 1 -name '*.png' | sort -V); do
 			image "$1" "$2" "$3" "$4" "$5" "$frame"
 	            # Sleep between frames to make the animation smooth.
 		    # Make it infinite loop on gif or exit on user input(?)
 	            	sleep .07
 	        done							;;
 	"pdfpreview")
-		[ ! -f "$cachedir"/"$6".jpg ] && \
-			if [ "$PDF_PNG" ]; then
-			pdftoppm -f 1 -scale-to-y -1 -singlefile -png "$6" "$cachedir"/"$6"
-			else
-			pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$cachedir"/"$6"
-			fi
-		image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6".jpg		;;
+		if [ "$PDF_PNG" ]; then
+			[ ! -f "$img_sum".png ] && \
+				pdftoppm -f 1 -scale-to-y -1 -singlefile -png "$6" "$img_sum"
+				image "$1" "$2" "$3" "$4" "$5" "$img_sum".png
+		else
+			[ ! -f "$img_sum".jpg ] && \
+				pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$6" "$img_sum"
+				image "$1" "$2" "$3" "$4" "$5" "$img_sum".jpg
+		fi ;;
         "docxpreview")
-		[ ! -f "$cachedir"/"$6".jpg ] && \
-			soffice --headless --convert-to pdf "$6" --outdir "$cachedir" >/dev/null 2>&1 && \
-													# optional script here
-			pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$cachedir"/"$(noextname "$6")".pdf "$cachedir"/"$6"
-		image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6".jpg		;;
+		[ ! -f "$img_sum".jpg ] && \
+			soffice --headless --convert-to pdf "$PWD"/"$6" --outdir "$cachedir" >/dev/null 2>&1 && \
+			pdftoppm -f 1 -scale-to-y -1 -singlefile -jpeg -tiffcompression jpeg "$cachedir"/"$(noextname "$6")".pdf "$img_sum" && \
+			rm "$cachedir"/"$(noextname "$6")".pdf &
+		image "$1" "$2" "$3" "$4" "$5" "$img_sum".jpg		;;
 	"audiopreview")
-		[ ! -f "$cachedir"/"$6".png ] && \
-			ffmpeg -i "$6" "$cachedir"/"$6".png -y >/dev/null 2>&1
-		image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6".jpg		;;
+		[ ! -f "$img_sum".png ] && \
+			ffmpeg -i "$6" "$img_sum".png -y >/dev/null 2>&1
+		image "$1" "$2" "$3" "$4" "$5" "$img_sum".jpg		;;
 	"fontpreview")
-		[ ! -f "$cachedir"/"$6".png ] && \
-			fontpreview -i "$6" -o "$cachedir"/"$6".png
-    		image "$1" "$2" "$3" "$4" "$5" "$cachedir"/"$6".png		;;
+		[ ! -f "$img_sum".png ] && \
+			fontpreview -i "$6" -o "$img_sum".png
+    		image "$1" "$2" "$3" "$4" "$5" "$img_sum".png		;;
 	*)
 		echo 'Unknown command:' "$1"
 esac
