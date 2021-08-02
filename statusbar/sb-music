@@ -13,10 +13,10 @@ pidof -x sb-mpdup >/dev/null 2>&1 || sb-mpdup >/dev/null 2>&1 &
 [ "${#filter}" -gt 45 ] && onlytitle || echo "$filter"
 
 case $BLOCK_BUTTON in
-	1) mpc toggle ;;	# right click, pause/unpause
+	1) mpc -q toggle ;;	# right click, pause/unpause
 	2) setsid -f "$TERMINAL" -e ncmpcpp -s visualizer ;;  # middle click, music player
 	3) mpdnoti  ;;		# Notification with album cover
-	4) mpc next ;;		# scroll down, next
-	5) mpc prev ;;		# scroll up, previous
+	4) mpc -q next ;;	# scroll down, next
+	5) mpc -q prev ;;	# scroll up, previous
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
