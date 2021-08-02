@@ -22,8 +22,9 @@ image() {
 }
 
 # if the file doesn't exist and doesn't have a size more than 0, also sets "$1"
-# to be clear so it doesn't try to make the preview
-[ ! -s "$6" ] && echo "The file doesn't exist and it's size is not greater than zero, exiting..." && set -- "clear"
+# to be clear so it doesn't try to make the preview (only run if the sixth
+# argument exist)
+[ -n "$6" ] && [ ! -s "$6" ] && echo "The file doesn't exist and it's size is not greater than zero, exiting..." && set -- "clear"
 
 case "$1" in
 	"pid")	# sometimes you killed the windows in any other way and the
