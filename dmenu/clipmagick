@@ -8,16 +8,17 @@ menu() {
 	printf "4.  [URL]   Download yt audio🎧\n"
 	printf "5.  [URL]   Shorten url✂️\n"
 	printf "6.  [URL]   Play videos/audio in mpv🤟🎥\n"
-	printf "7.  [Text]  Search on....🦆\n"
-	printf "8.  [Text]  Convert text to QR image\n"
-	printf "9.  [Text]  View on VIM\n"
-       printf "10. [Text]  Put something on your clipboard\n"
-       printf "11. [Text]  Upload to 0x0.st\n"
-       printf "12. [Image] Save clipboard image🔖\n"
-       printf "13. [Image] Upload to 0x0.st\n"
-       printf "14. [Shell] Run shell command on st🤖\n"
-       printf "15. [GOD]   Save godwords on your clipboard\n"
-       printf "16. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
+	printf "7.  [URL]   Open link on sxiv\n"
+	printf "8.  [Text]  Search on....🦆\n"
+	printf "9.  [Text]  Convert text to QR image\n"
+       printf "10. [Text]  View on VIM\n"
+       printf "11. [Text]  Put something on your clipboard\n"
+       printf "12. [Text]  Upload to 0x0.st\n"
+       printf "13. [Image] Save clipboard image🔖\n"
+       printf "14. [Image] Upload to 0x0.st\n"
+       printf "15. [Shell] Run shell command on st🤖\n"
+       printf "16. [GOD]   Save godwords on your clipboard\n"
+       printf "17. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
 }
 spell_failed() { notify-send "Clipmagick" "Error 404🤖" ; exit 1 ;}
 
@@ -65,34 +66,37 @@ case $choice in
 	setsid -f mpv -quiet --title="Music" "$cbtext" || spell_failed
 	notify-send "🎥 Opening video..."
 	;;
-    7)	#Search on....🦆
+    7)	#Open link on sxiv
+	sxiv "$cbtext"
+	;;
+    8)	#Search on....🦆
 	$BROWSER "https://duckduckgo.com/?q=$cbtext"
 	;;
-    8)	#Convert text to QR image
+    9)	#Convert text to QR image
 	qrencode -o $cachedir/tmpqrcode.png "$cbtext" && \
 	sxiv -bp -s f $cachedir/tmpqrcode.png ; rm $cachedir/tmpqrcode.png
 	;;
-    9)	#View on VIM
+    10)	#View on VIM
 	#still doesn't work..
 	setsid -f st -e printf '%s' "$cbtext" | nvim
-	;;#|| spell_failed	;;
-    10)	#Put something on your clipboard
+	;; #|| spell_failed	;;
+    11)	#Put something on your clipboard
     	printf | dmenu | xclip -i -sel c
 	;;
-    11)	#Upload to 0x0.st
+    12)	#Upload to 0x0.st
     	up_file=$cachedir/tmpclipboard
-	xclip -selection clipboard > $up_file
+	xclip -sel clipboard > $up_file
 	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
         [ "$output" = "Segmentation fault" ] && spell_failed
         echo -n "$output" | xclip -sel c && \
 	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
 	;;
-    12)	#Save clipboard image🔖
+    13)	#Save clipboard image🔖
     	d=$(date +'%d-%m_%I_%M_%S')
         { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \ sxiv "$HOME"/clipboard"$d".png ;} || spell_failed
 	;;
-    13)	#Upload to 0x0.st
+    14)	#Upload to 0x0.st
     	up_file=$cachedir/tmpclipboard.png
 	xclip -sel clipboard -t image/png -o > $up_file
 	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
@@ -101,14 +105,14 @@ case $choice in
 	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
 	;;
-    14)	#Run shell command on st
+    15)	#Run shell command on st
 	setsid -f st -e "$cbtext" #|| spell_failel #;;
 	read -r _
 	;;
-    15)	#Save godwords on your clipboard
+    16)	#Save godwords on your clipboard
 	godwords | xclip -sel c
 	;;
-    16)	# GNU/Linux!
+    17)	# GNU/Linux!
 echo "I'd just like to interject for a moment. What you’re referring to as
 Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus
 Linux. Linux is not an operating system unto itself, but rather another free
@@ -118,7 +122,7 @@ POSIX.
 
 Many computer users run a modified version of the GNU system every day, without
 realizing it. Through a peculiar turn of events, the version of GNU which is
-widely used today is often called \“Linux\”, and many of its users are not
+widely used today is often called “Linux”, and many of its users are not
 aware that it is basically the GNU system, developed by the GNU Project. There
 really is a Linux, and these people are using it, but it is just a part of the
 system they use.
@@ -128,6 +132,6 @@ resources to the other programs that you run. The kernel is an essential part
 of an operating system, but useless by itself; it can only function in the
 context of a complete operating system. Linux is normally used in combination
 with the GNU operating system: the whole system is basically GNU with Linux
-added, or GNU/Linux. All the so-called \“Linux\” distributions are really
+added, or GNU/Linux. All the so-called “Linux” distributions are really
 distributions of GNU/Linux." | xclip -sel c ;;
 esac
