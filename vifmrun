@@ -7,7 +7,7 @@ export FIFO_UEBERZUG="/tmp/vifm-ueberzug-${PPID}"
 [ -z "$DISPLAY" ] && vifm "$@" && exit
 
 # only run if ueberzug installed
-! command -v ueberzug && vifm "$@" && exit 1
+! command -v ueberzug >/dev/null && vifm "$@" && exit 1
 
 [ -e "$FIFO_UEBERZUG" ] || { mkfifo "$FIFO_UEBERZUG" || exit 1 ;}
 ueberzug layer --parser json --silent < "$FIFO_UEBERZUG" &
