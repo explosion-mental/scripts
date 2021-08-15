@@ -2,7 +2,7 @@
 
 # A UI for detecting and selecting all displays. Probes xrandr for connected
 # displays and lets user select one to use. User may also select "manual
-# selection" which opens arandr.
+# selection" which opens arandr (gui).
 
 postrun() {
 	# Stuff to run to clean up. Here you can add your own programs
