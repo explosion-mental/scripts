@@ -15,8 +15,8 @@ cmds="\
 💀 Shutdown	sudo shutdown -h now
 🛌 Suspend	sudo zzz
 🔃 Reboot	sudo reboot
-🚪leave dwm	kill -TERM $(pgrep -u $USER "\bdwm$")
-♻ renew dwm	kill -HUP $(pgrep -u $USER "\bdwm$")"
+🚪leave dwm	kill -TERM $(pgrep -u "$USER" "\bdwm$")
+♻ renew dwm	kill -HUP $(pgrep -u "$USER" "\bdwm$")"
 
 choice="$(echo "$cmds" | cut -d'	' -f 1 | dmenu)" || exit 1
 eval "$(echo "$cmds" | grep "^$choice	" | cut -d '	' -f2-)"
