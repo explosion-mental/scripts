@@ -2,9 +2,10 @@
 Useful scripts (made by hand or forked from) and some of Luke's scripts.
 
 There are 3 directories:
-- Divine; experiments, ideas, fun..
-- dmenu, scripts that **can** use dmenu or **hardcoded** to dmenu
-- statusbar, these ones shows information really good for most statusbar
+- **Divine** - experiments, ideas, fun..
+- **dmenu** - scripts that _can_ use dmenu or _hardcoded_ to dmenu
+- **statusbar** - no flags, self descriptive and they print a new line at the
+  end so it's compatible with most bars (e.g. polybar)
 
 
 The important ones are:
