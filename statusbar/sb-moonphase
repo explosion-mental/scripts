@@ -5,8 +5,9 @@
 
 moonfile="${XDG_DATA_HOME:-$HOME/.local/share}/moonphase"
 
-[ "$(stat -c %y "$moonfile" 2>/dev/null | cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ] ||
+{ [ "$(stat -c %y "$moonfile" 2>/dev/null | cut -d' ' -f1)" = "$(date '+%Y-%m-%d')" ] && [ -s "$moonfile" ] ;} ||
 	{ curl -sf "wttr.in/?format=%m" > "$moonfile" || exit 1 ;}
+	#{ curl -sf "wttr.in/?format=%m" || echo "⚠️" ;} > "$moonfile"
 
 icon="$(cat "$moonfile")"
 
@@ -24,18 +25,8 @@ esac
 
 echo "${icon-?}"
 
-
-refresh_modules() {
-	kill -45 $(pidof dwmblocks)		# Music module 11
-	kill -40 $(pidof dwmblocks)		# News 6
-	kill -44 $(pidof dwmblocks)		# Volume 10
-	kill -39 $(pidof dwmblocks)		# Forecast 5
-	kill -35 $(pidof dwmblocks)		# Clock 1
-	kill -49 $(pidof dwmblocks)		# Help 15
-}
-
 case $BLOCK_BUTTON in
-	1) refresh_modules ;;
+	1) notify-send "$icon $name" ;;
 	3) notify-send "🌜 Moon phase module" "<i>Displays current moon phase.</i>
 - 🌑: New
 - 🌒: Waxing Crescent

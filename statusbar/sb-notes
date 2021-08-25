@@ -7,7 +7,7 @@
 notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-quicknotes.TXT"
 
 case $BLOCK_BUTTON in
-	1) reminder="$(echo | dmenu -p 'Quick note:')"
+	1) reminder="$(printf | dmenu -p 'Quick note:')"
 	[ -z "$reminder" ] && exit
 	echo "$reminder" >> "$notes_file" && kill -64 "$(pidof dwmblocks)"
 		;;
@@ -21,4 +21,4 @@ esac
 #cat "$notes_file" 2>/dev/null || echo "NOTES"
 
 # You can see the history I guess
-tail -1 "$notes_file" 2>/dev/null || echo "NOTES"
+tail -1 "$notes_file" 2>/dev/null || echo "📔"

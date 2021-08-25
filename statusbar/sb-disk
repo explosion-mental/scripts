@@ -9,16 +9,18 @@ location=${1:-/}
 [ -d "$location" ] || exit
 
 case $BLOCK_BUTTON in
-	1) notify-send "💽 Disk space" "$(df -h --output=target,used,size)" ;;
+	1) notify-send -t 5000 "💽 Disk space" "$(df -h --output=target,used,size)" ;;
+	2) dmenumount ;;
 	3) notify-send "💽 Disk module" "\- Shows used hard drive space.
-- Click to show all disk info." ;;
+- Middle click dmenumount
+- Left click to show all disk info." ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 
-#case "$location" in
-#	"/home"* ) icon="🏠" ;;
-#	"/mnt"* ) icon="💾" ;;
-#	*) icon="💾";;
-#esac
+case "$location" in
+	"/home"* ) icon="🏠" ;;
+	"/mnt"* ) icon="💾" ;;
+	*) icon="💾";;
+esac
 
 printf "%s%s" "💾" "$(df -h "$location" | awk ' /[0-9]/ {print $3 "/" $2}')"
