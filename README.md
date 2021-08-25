@@ -90,6 +90,9 @@ cache).
   than _ZZ_ or _:q_ those files would not be removed.
 - Two configurable variables on vifmimg.
 - It uses cksum to see whether the file was modified.
+### todo
+- display a message while the preview is loading (for everything but images)
+
 
 
 **Have fun!**
