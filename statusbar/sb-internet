@@ -1,4 +1,4 @@
-#!/bin/dash
+#!/bin/sh
 
 # Show wifi 📶 and percent strength or 📡 if none.
 # Show 🌐 if connected to ethernet or ❎ if none.
@@ -9,7 +9,8 @@ togglewifi(){ { [ "$(nmcli radio wifi)" = "enabled" ] && nmcli radio wifi off ;}
 case $BLOCK_BUTTON in
 	1) togglewifi ;;
 	2) "$TERMINAL" -e nmtui; pkill -RTMIN+4 dwmblocks ;;
-	3) notify-send "🌐 Internet module" "\- Click to connect
+	3) notify-send "🌐 Internet module" "\- Left click to toggle wifi
+- Middle click to open nmtui
  ❌: wifi disabled
 📡: no wifi connection
 📶: wifi connection with quality
@@ -26,4 +27,4 @@ case "$(cat /sys/class/net/w*/operstate 2>/dev/null)" in
 	up) wifiicon="$(awk '/^\s*w/ { print "📶" int($3 * 100 / 70) "%" }' /proc/net/wireless)" ;;
 esac
 
-printf "%s%s%s\n" "$wifiicon" "$(sed "s/down/❎/;s/up/🌐/" /sys/class/net/e*/operstate 2>/dev/null)" "$(sed "s/.*/🔒/" /sys/class/net/tun*/operstate 2>/dev/null)"
+printf "%s%s%s\n" "$wifiicon" "$(sed "s/down/❎/;s/up/🌐/;s/unknown/🌐/" /sys/class/net/e*/operstate 2>/dev/null)" "$(sed "s/.*/🔒/" /sys/class/net/tun*/operstate 2>/dev/null)"
