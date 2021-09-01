@@ -8,4 +8,4 @@ PID=$(xprop -id "$(xprop -root | awk '/_NET_ACTIVE_WINDOW\(WINDOW\)/{print $NF}'
 PID="$(pstree -lpA "$PID" | tail -n 1 | awk -F'---' '{print $NF}' | sed -re 's/[^0-9]//g')"
 #xdg-open "$(find "$(readlink /proc/"$PID"/cwd)" -maxdepth 1 -type f | sed "s|$HOME|~|g" | dmenu -i -l 30 "$@" )" || return 1
 cd "$(readlink /proc/"$PID"/cwd)" || return 1
-xdg-open "$(find . -maxdepth 1 -type f -printf "%f\n" | sort | dmenu -i -l 30 "$@" )" || notify-send ""
+xdg-open "$(find . -maxdepth 1 -type f -printf "%f\n" | sort | dmenu -i -l 30 "$@" )" #|| notify-send ""
