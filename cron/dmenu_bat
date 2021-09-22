@@ -1,0 +1,33 @@
+#!/bin/sh
+
+# Spawns dmenu with a big font and red color if your battery is bellow %5
+# percent (or the percent you wish). Usefull because dmenu gets the focus
+# (stdin) and allows me to get the battery. Run this as a cronjob, add it to
+# sb_battery, etc.
+# A good patch for dmenu would be center..
+
+# dmenu will 'prompt' this message
+msg=" or less battery!"
+# where the 'helper' file is store
+bat_file="${XDG_DATA_HOME:-$HOME}/.bat_alarm"
+# change BAT number to whatever you have
+bat=/sys/class/power_supply/BAT0
+
+[ "$(cat $bat/status)" = "Charging" ] && exit
+
+# if the file doesn't exist then make it (if it doesn't exist then it's
+# the first time running..)
+[ ! -f "$bat_file" ] && echo 0 > "$bat_file"
+
+if [ "$(cat $bat/capacity)" -lt 10 ]; then
+	num=10%
+	# if the file has 0 then run it, else it already has runned
+	[ "$(cat "$bat_file")" = "0" ] && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black -c
+	echo 1 > "$bat_file"
+elif [ "$(cat $bat/capacity)" -lt 5 ]; then
+	num=5%
+	# if the file has 0 then run it, else if it has 1 then run it as well.
+	# If 2 then it means it has already run.
+	{ [ "$(cat "$bat_file")" = "1" ] || [ "$(cat "$bat_file")" = "0" ] ;} && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black -c
+	echo 2 > "$bat_file"
+fi
