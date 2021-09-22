@@ -2,10 +2,9 @@
 
 # Originally by Andr3as07 <https://github.com/Andr3as07>
 # Some changes by Luke
-
 # This block displays the number running background tasks.  Requires tsp.
 
-tspout="$(ts -l)"
+tspout="$(tsp -l)"
 
 # Handle mouse clicks
 case $BLOCK_BUTTON in
@@ -24,4 +23,3 @@ numq=$(echo "$tspout" | grep -c "queued")
 num=$((numr + numq))
 
 [ "$num" -gt 0 ] && echo "📝$num($numq)"
-#[ "$num" -gt 0 ] && echo "🤖$num($numq)" || echo ""

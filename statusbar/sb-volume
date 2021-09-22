@@ -2,6 +2,7 @@
 
 # Signal 10
 # Prints the current volume or 🔇 if muted.
+# dependencies: pamixer
 case $BLOCK_BUTTON in
 	1) pamixer -t ;;
 	2) setsid -f "$TERMINAL" -e pulsemixer ;;

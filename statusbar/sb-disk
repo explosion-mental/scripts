@@ -3,6 +3,7 @@
 # Status bar module for disk space
 # $1 should be drive mountpoint, otherwise assumed /.
 # Signal 29
+# optional dependencies: dmenumont
 
 location=${1:-/}
 

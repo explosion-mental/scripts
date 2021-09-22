@@ -1,24 +1,21 @@
 #!/bin/sh
-# Displays a quick note
-# couldn't make it work with variables, so use a file instead
-# Note: You should put something little, otherwise use calcurse.
+# Displays a quick note.
 # Signal 30
 
-# Put it on ${XDG_CACHE_HOME:-$HOME/.cache} or
-notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-quicknotes.TXT"
+# Put it on ${XDG_CACHE_HOME:-$HOME/.cache}
+notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-quicknotes.txt"
 
 case $BLOCK_BUTTON in
 	1) reminder="$(printf | dmenu -p 'Quick note:')"
 	[ -z "$reminder" ] && exit
-	echo "$reminder" >> "$notes_file" && kill -64 "$(pidof dwmblocks)"
-		;;
+	echo "$reminder" >> "$notes_file" && kill -64 "$(pidof dwmblocks)" ;;
 	2) rm "$notes_file" ;;
 	3) notify-send "Reminders" "\- Shows whatever you need to remember
 - Left click prompts for a note with dmenu
 - Middle click deletes the file of notes" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
-#cat "$notes_file" 2>/dev/null || echo "NOTES"
 
 # Since it will only display the lastest entry, you can see the history.
+#cat "$notes_file" 2>/dev/null || echo "NOTES"
 tail -1 "$notes_file" 2>/dev/null || echo "📔"

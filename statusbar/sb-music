@@ -1,6 +1,7 @@
 #!/bin/sh
 
 # Music module
+# dependencies: sb-mpdup
 # Signal 11
 #filter() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
 # can it work with mpc current??

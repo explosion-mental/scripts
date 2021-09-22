@@ -1,5 +1,7 @@
 #!/bin/sh
-# Clock module. Sigal 1
+# Clock module.
+# Signal 1
+# optional dependencies: calcurse (for showing appointments)
 clock=$(date '+%I')
 
 case "$clock" in
