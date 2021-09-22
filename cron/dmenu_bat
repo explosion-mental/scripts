@@ -6,6 +6,8 @@
 # sb_battery, etc.
 # A good patch for dmenu would be center..
 
+# TODO refresh the file to 0
+
 # dmenu will 'prompt' this message
 msg=" or less battery!"
 # where the 'helper' file is store
@@ -22,12 +24,12 @@ bat=/sys/class/power_supply/BAT0
 if [ "$(cat $bat/capacity)" -lt 10 ]; then
 	num=10%
 	# if the file has 0 then run it, else it already has runned
-	[ "$(cat "$bat_file")" = "0" ] && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black -c
+	[ "$(cat "$bat_file")" = "0" ] && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black
 	echo 1 > "$bat_file"
 elif [ "$(cat $bat/capacity)" -lt 5 ]; then
 	num=5%
 	# if the file has 0 then run it, else if it has 1 then run it as well.
 	# If 2 then it means it has already run.
-	{ [ "$(cat "$bat_file")" = "1" ] || [ "$(cat "$bat_file")" = "0" ] ;} && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black -c
+	{ [ "$(cat "$bat_file")" = "1" ] || [ "$(cat "$bat_file")" = "0" ] ;} && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black
 	echo 2 > "$bat_file"
 fi
