@@ -12,7 +12,7 @@ This ensures that notifications will display, xdotool commands will function and
 
 
 
-In case this doesn't works, what I use is `printenv`. You can narrow down the list but esdo
+In case this doesn't works, what I use is `printenv`. You can narrow down the list but essentially do:
 ```
 printenv | xclip -sel c
 ```
