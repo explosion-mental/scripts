@@ -6,8 +6,6 @@
 # sb_battery, etc.
 # A good patch for dmenu would be center..
 
-# TODO refresh the file to 0
-
 # dmenu will 'prompt' this message
 msg=" or less battery!"
 # where the 'helper' file is store
@@ -15,7 +13,7 @@ bat_file="${XDG_DATA_HOME:-$HOME}/.bat_alarm"
 # change BAT number to whatever you have
 bat=/sys/class/power_supply/BAT0
 
-[ "$(cat $bat/status)" = "Charging" ] && exit
+[ "$(cat $bat/status)" = "Charging" ] && echo 0 > "$bat_file" && exit
 
 # if the file doesn't exist then make it (if it doesn't exist then it's
 # the first time running..)
@@ -32,4 +30,6 @@ elif [ "$(cat $bat/capacity)" -lt 5 ]; then
 	# If 2 then it means it has already run.
 	{ [ "$(cat "$bat_file")" = "1" ] || [ "$(cat "$bat_file")" = "0" ] ;} && printf | dmenu -p "$num$msg" -fn Monospace-22 -nb "dark red" -nf white -sb red -sf black
 	echo 2 > "$bat_file"
+else
+	echo 0 > "$bat_file"
 fi
