@@ -1,5 +1,4 @@
 #!/bin/sh
-
 err() { echo "Usage:
 	tag [OPTIONS] file
 Options:
