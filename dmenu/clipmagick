@@ -1,5 +1,8 @@
 #!/bin/sh
-# Make your clipboard thingys helpful
+# Make clipboard helpful
+
+# Edit below to fit your taste
+cachedir=/tmp
 
 menu() {
 	printf "1.  [URL]   Save as bookmark📑\n"
@@ -14,30 +17,23 @@ menu() {
        printf "10. [Text]  View on VIM\n"
        printf "11. [Text]  Put something on your clipboard\n"
        printf "12. [Text]  Upload to 0x0.st\n"
-       printf "13. [Image] Save clipboard image🔖\n"
-       printf "14. [Image] Upload to 0x0.st\n"
-       printf "15. [Shell] Run shell command on st🤖\n"
-       printf "16. [GOD]   Save godwords on your clipboard\n"
-       printf "17. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
+       printf "13. [Text]  Put clip text into a notification\n"
+       printf "14. [Image] Save clipboard image🔖\n"
+       printf "15. [Image] Upload to 0x0.st\n"
+       printf "16. [Shell] Run shell command on st🤖\n"
+       printf "17. [GOD]   Save godwords on your clipboard\n"
+       printf "18. [I'd just like to interject for a moment.] What you’re referring to as Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus Linux. Linux is not an operating system\n"
 }
 spell_failed() { notify-send "Clipmagick" "Error 404🤖" ; exit 1 ;}
 
-cachedir=/tmp
-#[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
-
-# FORMATING
+[ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 # remove tabs and new lines
 prompt=$(xclip -o -sel c | tr -d '\t' | tr -d '\n')
-# Check if clipboard has something, this doesn't work with images
-#[ -z "$prompt" ] && notify-send "Empty clipboard📎" && exit
-#{ [ "$prompt" = "" ] && clipmenu ;} & exit
-#[ "$prompt" = "" ] && notify-send "Empty clipboard📎" && exit
 
 # if the selected clipboard text is bigger than 30 chars, replaze all other
-# after the first 30 chars with '...'
-[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}" # || prompt="$prompt"
+# after the first 30 chars with '...' (improves load time)
+[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}"
 choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d'.' -f1)
-#choice=$(menu | cut -f2| dmenu -p "$prompt" -i -l 20 | cut -d. -f1)
 cbtext=$(xclip -o -selection clipboard)
 
 case $choice in
@@ -88,31 +84,34 @@ case $choice in
 	xclip -sel clipboard > $up_file
 	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
         [ "$output" = "Segmentation fault" ] && spell_failed
-        echo -n "$output" | xclip -sel c && \
+        echo "$output" | xclip -sel c && \
 	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
 	;;
-    13)	#Save clipboard image🔖
+13)	#Put clipboard text into a transient window (notification)
+	notify-send -u critical "$cbtext"
+	;;
+    14)	#Save clipboard image🔖
     	d=$(date +'%d-%m_%I_%M_%S')
         { xclip -sel clipboard -t image/png -o > "$HOME"/clipboard"$d".png && \ sxiv "$HOME"/clipboard"$d".png ;} || spell_failed
 	;;
-    14)	#Upload to 0x0.st
+    15)	#Upload to 0x0.st
     	up_file=$cachedir/tmpclipboard.png
 	xclip -sel clipboard -t image/png -o > $up_file
 	output=$(curl --silent -F "file=@$up_file" https://0x0.st) # | xclip -sel c
         [ "$output" = "Segmentation fault" ] && spell_failed
-        echo -n "$output" | xclip -sel c && \
+        echo "$output" | xclip -sel c && \
 	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
 	;;
-    15)	#Run shell command on st
+    16)	#Run shell command on st
 	setsid -f st -e "$cbtext" #|| spell_failel #;;
 	read -r _
 	;;
-    16)	#Save godwords on your clipboard
+    17)	#Save godwords on your clipboard
 	godwords | xclip -sel c
 	;;
-    17)	# GNU/Linux!
+    18)	# GNU/Linux!
 echo "I'd just like to interject for a moment. What you’re referring to as
 Linux, is in fact, GNU/Linux, or as I’ve recently taken to calling it, GNU plus
 Linux. Linux is not an operating system unto itself, but rather another free
