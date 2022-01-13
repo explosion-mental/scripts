@@ -1,21 +1,26 @@
 #!/bin/sh
-# Displays a quick note.
-# Signal 30
 
-# Put it on ${XDG_CACHE_HOME:-$HOME/.cache}
-notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-quicknotes.txt"
+# Displays a quick note and appends future notes to a file
+# Signal 13
+
+# if the last note is empty, it will use this icon
+icon="📔"
+
+# file where all the notes gets appendend to
+notes_file="${XDG_DATA_HOME:-$HOME/.local/share}/sb-notes"
+
+lastnote="$(tail -1 "$notes_file" 2>/dev/null)"
 
 case $BLOCK_BUTTON in
-	1) reminder="$(printf | dmenu -p 'Quick note:')"
-	[ -z "$reminder" ] && exit
-	echo "$reminder" >> "$notes_file" && kill -64 "$(pidof dwmblocks)" ;;
-	2) rm "$notes_file" ;;
-	3) notify-send "Reminders" "\- Shows whatever you need to remember
+	1) reminder="$(printf '' | dmenu -p 'Quick note:' -fn 'monospace:size=18')"
+	[ -z "$reminder" ] && echo "$icon"
+	echo "$reminder" >> "$notes_file" ;;
+	2) echo "$lastnote" | xclip -selection clipboard -r;;
+	3) notify-send "📔Reminder module" "\- Shows whatever you need to remember
 - Left click prompts for a note with dmenu
-- Middle click deletes the file of notes" ;;
+- Middle click puts the note on your clipboard" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
 
-# Since it will only display the lastest entry, you can see the history.
-#cat "$notes_file" 2>/dev/null || echo "NOTES"
-tail -1 "$notes_file" 2>/dev/null || echo "📔"
+# if the last note is empty display icon, else display the last note
+{ [ -z "$lastnote" ] && echo "$icon" ;} || echo "$lastnote"
