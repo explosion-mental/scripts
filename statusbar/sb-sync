@@ -1,7 +1,9 @@
 #!/bin/sh
 
-# Syncthing Little icon🌐
-# Signal 55
+# syncthing icon if it's running
+# Signal 10
+
+{ pidof -q syncthing && echo "🌐" ;} || exit
 
 case $BLOCK_BUTTON in
 	1) killall syncthing && kill -55 "$(pidof dwmblocks)" ;;
@@ -10,6 +12,3 @@ case $BLOCK_BUTTON in
 - Middle click to show upgradable packages" ;;
 	6) "$TERMINAL" -e "$EDITOR" "$0" ;;
 esac
-
-[ -n "$(pidof syncthing)" ] && echo "🌐" || echo ""
-#[ "$(pidof synthing)" -gt 0 ] && echo "🌐" || echo ""
