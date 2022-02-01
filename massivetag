@@ -1,25 +1,46 @@
 #!/bin/sh
 
-# Requires Luke Smith tag wrapper script with some tweak.
+# Give a directory as an argument and tag all your music files inside that
+# directory. It will only prompt you once for the album, author and year.
 
-[ ! -d "$1" ] && printf "Please add a directory to tagg.\\n" && exit
+dir="$1"
+[ ! -d "$dir" ] && { echo "Please add a directory to tag." && exit 1 ;}
 
-#Prompts
+cd "$dir" || { echo "Error: $dir Not found" && exit 2 ;}
+
 echo "Enter the album title:"; read -r album
 echo "Enter the artist:"; read -r author
 echo "Enter the publication year:"; read -r year
 
-# List of all songs on a directory
-find "$1" -maxdepth 1 -type f -printf '%f\n' > songs.txt
-while read -r song;
-do
-	file="$1"/"$song"
-	# Use the name of the file as the title
-	title="$(noextname "$song")"
-	tag -a "$author" -A "$booktitle" -t "$title" -d "$year" "$file" && echo "Tagging... '$song'✔️"
-done < songs.txt && rm songs.txt
+# datag 1file 2album 3title 4author 5year 6totaltracks
+datag() {
+	tags="ALBUM=$2\nTITLE=$3\nARTIST=$4\nDATE=$5\nTOTALTRACKS=$6"
+	case "$1" in
+		*.ogg)	echo "$tags" | vorbiscomment -w "$1" ;;
+		*.opus)	echo "$tags" | opustags -i --set-all "$1" ;;
+		*.mp3)	eyeD3 -Q --remove-all -a "$4" -A "$2" -t "$3" -N "$6" -Y "$5" "$1" ;;
+		*.flac)	metaflac --remove-all-tags --set-tag="$tags" "$1" ;;
+		*) echo "\n\tFile type '${1%.*}' not implemented yet on '$1', skipping..." ;;
+	esac
+}
 
-# Rename the directory to the album name
-escbook="$(echo "$booktitle" | iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g")"
-# If the name is the same as the recommenden one then dont rename it??
-mv "$1" "$escbook"
+# When downloading, the name gets mess up
+sanename() { iconv -cf UTF-8 -t ASCII//TRANSLIT | tr -d '[:punct:]' | tr ' ' '_' | sed "s/-\+/-/g;s/\(^-\|-\$\)//g" ;}
+
+# Make a list of the songs to read to
+all="$(find . -maxdepth 1 -type f -printf "%f\n")"
+totaltracks="$(echo "$all" | wc -l)"
+
+printf "\nTagging ...\n"
+
+echo "$all" | while IFS= read -r song
+do
+	printf " %s" "$song"
+	title="${song%.*}"	# no ext name
+	datag "$song" "$album" "$title" "$author" "$year" "$totaltracks" || echo "failed tagging $song"
+	printf "\tdone...\n"
+done
+
+# Make the album name the directory name (if it isn't the same already)
+titldir="$(echo "$album" | sanename)"
+[ ! "$dir" = "$titldir" ] && { cd .. && mv --interactive --verbose "$1" "$titldir" ;}
