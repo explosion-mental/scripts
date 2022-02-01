@@ -1,5 +1,7 @@
 #!/bin/sh
-# Make clipboard helpful
+
+# Interact with your clipboard contents
+# Dep: xclip, dmenu
 
 # Edit below to fit your taste
 cachedir=/tmp
@@ -27,6 +29,8 @@ menu() {
 spell_failed() { notify-send "Clipmagick" "Error 404🤖" ; exit 1 ;}
 
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
+
+# FORMATING
 # remove tabs and new lines
 prompt=$(xclip -o -sel c | tr -d '\t' | tr -d '\n')
 
@@ -47,9 +51,13 @@ case $choice in
         qndl "$cbtext" || spell_failed
 	;;
     4)	#Download yt audio🎧
-        qndl "$cbtext" 'audio'
-	#notify-send "⏳ Downloading audio..." "<i><u>'$(basename "$1")'</i></u>..."
-	#tsp -nf youtube-dl "$1" --add-metadata -icxf bestaudio/best --exec "mv {} $HOME/Downloads"
+	if echo "$cbtext" | grep -qs "playlist"; then
+		ytdldir=$(: | dmenu -p "Directory playlist name:")
+	else
+		ytdldir=""
+	fi
+	youtube-dl "$cbtext" --add-metadata --extract-audio --ignore-errors --format bestaudio/best --continue --exec "mv {} $HOME/$ytdldir"
+	notify-send "⏳ Downloading audio..." "<i><u>'$(basename "$1")'</i></u>..."
 	;;
     5)	#Shorten url✂️
         notify-send "Cutting...✂️"
@@ -88,7 +96,7 @@ case $choice in
 	notify-send "URL copied to your clipboard" "<i>$output</i>"
 	rm $up_file
 	;;
-13)	#Put clipboard text into a transient window (notification)
+    13)	#Put clipboard text into a transient window (notification)
 	notify-send -u critical "$cbtext"
 	;;
     14)	#Save clipboard image🔖
