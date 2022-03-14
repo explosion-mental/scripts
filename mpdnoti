@@ -18,7 +18,7 @@ mpdArtist="$(mpc current --format '%artist%')"
 mpdAlbum="$(mpc current --format '%album%')"
 mpdLength="$(mpc current --format '%artist%')"
 mpdSongID="$(mpc current --format '%id%')"
-mpdPlaylist="$(mpc | grep '\[paused\]' | awk '{print $2}' | sed 's,.*/,,')"
+mpdPlaylist="$(mpc | awk 'FNR == 2 {print $2}' | sed 's,.*/,,')"
 
 notify-send \
 	--expire-time="${expireTime}" \
