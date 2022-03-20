@@ -51,13 +51,14 @@ case $choice in
         qndl "$cbtext" || spell_failed
 	;;
     4)	#Download yt audio🎧
+	notify-send "Downloading <i>$cbtext</i>"
 	if echo "$cbtext" | grep -qs "playlist"; then
-		ytdldir=$(: | dmenu -p "Directory playlist name:")
+		ytdldir="${HOME}/$(: | dmenu -p "Directory playlist name:")"
 	else
-		ytdldir=""
+		ytdldir="$HOME/Downloads"
 	fi
-	youtube-dl "$cbtext" --add-metadata --extract-audio --ignore-errors --format bestaudio/best --continue --exec "mv {} $HOME/$ytdldir"
-	notify-send "⏳ Downloading audio..." "<i><u>'$(basename "$1")'</i></u>..."
+	youtube-dl --audio-format opus --audio-quality 0 --add-metadata --extract-audio --ignore-errors --continue \
+		--exec "mv {} $ytdldir && notify-send '⏳ Audio download finished' {}" "$cbtext"
 	;;
     5)	#Shorten url✂️
         notify-send "Cutting...✂️"
