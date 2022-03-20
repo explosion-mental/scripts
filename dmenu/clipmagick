@@ -4,7 +4,10 @@
 # Dep: xclip, dmenu
 
 # Edit below to fit your taste
+
 cachedir=/tmp
+# where youtube-dl puts stuff (video/audio)
+ytdldir="$HOME/Downloads"
 
 menu() {
 	printf "1.  [URL]   Save as bookmark📑\n"
@@ -30,15 +33,16 @@ spell_failed() { notify-send "Clipmagick" "Error 404🤖" ; exit 1 ;}
 
 [ ! -d "$cachedir" ] && mkdir -p "$cachedir"
 
-# FORMATING
-# remove tabs and new lines
-prompt=$(xclip -o -sel c | tr -d '\t' | tr -d '\n')
-
-# if the selected clipboard text is bigger than 30 chars, replaze all other
-# after the first 30 chars with '...' (improves load time)
-[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}"
-choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d'.' -f1)
+# clipboard text
 cbtext=$(xclip -o -selection clipboard)
+
+# remove tabs and new lines
+prompt=$(echo "$cbtext" | head -n 1 | tr -d '\t' | tr -d '\n')
+
+# truncate text if the selection is bigger than 30 chars
+[ "${#prompt}" -gt 30 ] && prompt="${prompt%"${prompt#?????????????????????????}"}"..."${prompt#"${prompt%???????}"}"
+
+choice=$(menu | dmenu -p "$prompt" -i -l 20 | cut -d'.' -f1)
 
 case $choice in
     1)	#Save as bookmark📑
@@ -54,8 +58,6 @@ case $choice in
 	notify-send "Downloading <i>$cbtext</i>"
 	if echo "$cbtext" | grep -qs "playlist"; then
 		ytdldir="${HOME}/$(: | dmenu -p "Directory playlist name:")"
-	else
-		ytdldir="$HOME/Downloads"
 	fi
 	youtube-dl --audio-format opus --audio-quality 0 --add-metadata --extract-audio --ignore-errors --continue \
 		--exec "mv {} $ytdldir && notify-send '⏳ Audio download finished' {}" "$cbtext"
