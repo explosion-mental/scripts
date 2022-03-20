@@ -1,0 +1,4 @@
+#compdef clipdel
+
+_arguments \
+  {-d,--delete}'[permanent deletion]'

@@ -1,0 +1,12 @@
+#compdef tag
+
+_arguments \
+    '-a[artist/author]:author' \
+    '-A[album/book title]:title' \
+    '-t[song/chapter title]:song' \
+    '-n[track/chapter number]:number' \
+    '-N[total number of tracks/chapters]:total' \
+    '-d[year of publication]' \
+    '-g[genre]:genre' \
+    '-c[comment]:comment' \
+    '*::next arg:_files'

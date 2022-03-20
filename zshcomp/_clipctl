@@ -1,0 +1,13 @@
+#compdef clipctl
+
+local -a cmds
+cmds=(\
+    'enable:enable clip collection' \
+    'disable:disable clip collection' \
+    'status:returns "enabled" or "disabled"' \
+    'toggle:toggles clip collection' \
+    'version:returns major version' \
+    'cache-dir:returns the directory used for caching' \
+)
+
+_describe 'command' cmds
