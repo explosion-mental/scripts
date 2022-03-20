@@ -1,43 +1,57 @@
 #!/bin/sh
 
-err() { echo "Usage:
-	tag [OPTIONS] file
-Options:
-	-a: artist/author
-	-t: song/chapter title
-	-A: album/book title
-	-n: track/chapter number
-	-N: total number of tracks/chapters
-	-d: year of publication
-	-g: genre
-	-c: comment
-You will be prompted for title, artist, album and track if not given." && exit 1 ;}
+# A wrapper to tag most music files
+# Supported file types: .ogg, .opus, .mp3, .flac
 
-while getopts "a:t:A:n:N:d:g:c:f:" o; do case "${o}" in
-	a) artist="${OPTARG}" ;;
-	t) title="${OPTARG}" ;;
-	A) album="${OPTARG}" ;;
-	n) track="${OPTARG}" ;;
-	N) total="${OPTARG}" ;;
-	d) date="${OPTARG}" ;;
-	g) genre="${OPTARG}" ;;
-	c) comment="${OPTARG}" ;;
-	f) file="${OPTARG}" ;;
-	*) printf "Invalid option: -%s\\n" "$OPTARG" && err ;;
-esac done
+#Dep: opustags, metaflac, eyeD3, vorbiscomment
+
+help_opt() {
+echo "Usage: tag [OPTIONS] file
+
+Options:
+  -a <artist/author>
+  -t <song/chapter title>
+  -A <album/book title>
+  -n <track/chapter number>
+  -N <total number of tracks/chapters>
+  -d <year of publication>
+  -g <genre>
+  -c <comment>"
+}
+
+prompt=0
+
+while getopts ":a: :A: :c: :d: :g: :h :n: :N: :t: :p" opt
+do
+	case "${opt}" in
+	a) artist="${OPTARG}"	;;
+	A) album="${OPTARG}"	;;
+	c) comment="${OPTARG}"	;;
+	d) date="${OPTARG}"	;;
+	g) genre="${OPTARG}"	;;
+	h) help_opt && exit 0	;;
+	n) track="${OPTARG}"	;;
+	N) total="${OPTARG}"	;;
+	t) title="${OPTARG}"	;;
+	p) prompt=1		;;
+	?) printf "Invalid option: -%s\n" "$OPTARG" && help_opt && exit 1 ;;
+	esac
+done
 
 shift $((OPTIND - 1))
 
 file="$1"
 
-[ ! -f "$file" ] && echo "Provide file to tag." && err
+[ ! -f "$file" ] && echo "Provide file to tag." && help_opt && exit 2
 
-[ -z "$title" ] && echo "Enter a title." && read -r title
-[ -z "$artist" ] && echo "Enter an artist." && read -r artist
-[ -z "$album" ] && echo "Enter an album." && read -r album
-#[ -z "$track" ] && echo "Enter a track number." && read -r track
-[ -z "$track" ] && track=""
+[ $prompt -eq 1 ] && {
+	[ -z "$title" ] && echo "Enter a title." && read -r title
+	[ -z "$artist" ] && echo "Enter an artist." && read -r artist
+	[ -z "$album" ] && echo "Enter an album." && read -r album
+	[ -z "$track" ] && echo "Enter a track number." && read -r track
+}
 
+#TODO don't overwrite all tags, have a flag for it.
 case "$file" in
 	*.ogg) echo "Title=$title
 Artist=$artist
@@ -64,5 +78,5 @@ TOTALTRACKS=$total
 DATE=$date
 GENRE=$genre
 DESCRIPTION=$comment" | metaflac --remove-all-tags --import-tags-from=- "$file" ;;
-	*) echo "File type not implemented yet." ;;
+	*) echo "File type not implemented yet on '$file'.❌" ;;
 esac
