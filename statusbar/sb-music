@@ -1,17 +1,16 @@
 #!/bin/sh
 
 # Music module
-# dependencies: sb-mpdup
 # Signal 11
-#filter() { mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
-# can it work with mpc current??
-filter="$(mpc | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;)"
-onlytitle() { mpc --format %title% | sed "/^volume:/d;s/\\[paused\\].*//g;/\\[playing\\].*/d;0,/^/{s/^/& /}" | paste -sd ' ' -;}
 
-pidof -x sb-mpdup >/dev/null 2>&1 || sb-mpdup >/dev/null 2>&1 &
+icon=" "
+name="$(mpc current --format '[[%artist% - ]%title%]|[%file%]')"
+shortname="$(mpc current --format '[%title%]|[%file%]')"
 
-#[ "$(filter | wc -m)" -gt 45 ] && onlytitle || filter
-[ "${#filter}" -gt 45 ] && onlytitle || echo "$filter"
+# don't print anything if nothing is playing
+[ "$(mpc status '%state%')" = 'paused' ] && echo '' && exit
+
+[ "${#name}" -gt 45 ] && printf '%s%s\n' "$icon" "$shortname" || printf '%s%s\n' "$icon" "$name"
 
 case $BLOCK_BUTTON in
 	1) mpc -q toggle ;;	# right click, pause/unpause
