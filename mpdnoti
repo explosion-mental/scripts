@@ -4,6 +4,7 @@
 # the image cover of the current song album. The image file cover needs to have
 # the same name as the album in the song, WITHOUT ANY EXTENSION
 # (no .png or .jpg).
+# mpdnoti expiretime # first argument as the expire time
 
 # Dep: mpd, mpc
 
@@ -11,7 +12,7 @@
 coverDir=$HOME/.local/share/covers
 
 # how much time does the notification stays (in ms)
-expireTime=3300
+expireTime=${1:-3300}
 
 mpdTitle="$(mpc current --format '[%title%]|[%file%]')"
 mpdArtist="$(mpc current --format '%artist%')"
