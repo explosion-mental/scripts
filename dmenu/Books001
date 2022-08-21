@@ -1,2 +1,0 @@
-#!/bin/sh
-ls ~/Docs/Libros/ | dmenu -i -l 30 | xargs -I {} zathura ~/Docs/Libros/"{}"
