@@ -1,7 +1,4 @@
 # scripts
-[Blog post](https://explosion-mental.codeberg.page/topics/scripts)
-
-
 Useful scripts (made by hand or forked from) and some of Luke's scripts.
 Generally, scripts will be self explanatory.
 
