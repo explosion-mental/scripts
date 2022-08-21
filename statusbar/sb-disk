@@ -24,4 +24,4 @@ case "$location" in
 	*) icon="💾";;
 esac
 
-printf "%s%s" "💾" "$(df -h "$location" | awk ' /[0-9]/ {print $3 "/" $2}')"
+printf "%s%s\n" "💾" "$(df -h "$location" | awk ' /[0-9]/ {print $3 "/" $2}')"
