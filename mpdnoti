@@ -15,24 +15,23 @@ coverDir="${HOME}/.local/share/covers"
 expireTime=${1:-3300}
 
 mpdTitle="$(mpc current --format '[%title%]|[%file%]')"
-mpdArtist="$(mpc current --format '%artist%')"
 mpdAlbum="$(mpc current --format '%album%')"
-mpdLength="$(mpc current --format '%artist%')"
-mpdSongID="$(mpc current --format '%id%')"
-mpdPlaylist="$(mpc | awk 'FNR == 2 {print $2}' | sed 's,.*/,,')"
+mpdTime="$(mpc status '%currenttime%')/$(mpc current --format '%time%')"
+mpdQue="$(mpc status '%songpos%/%length%')"
 
 # bash magik
 shopt -s nullglob extglob
-Files=("$coverDir"'/'"${mpdAlbum}"@(.png|.jpg|.jpeg))
-IconPath=${Files[0]:-"$coverDir"/sample.png}
+covers=("$coverDir"'/'"${mpdAlbum}"@(.png|.jpg|.jpeg))
+imgPath=${covers[0]:-"$coverDir"/sample.png}
 
 notify-send \
 	--replace-id=101 \
 	--app-name=mpdnoti \
 	--expire-time="${expireTime}" \
-	--icon "$IconPath" \
+	--icon "$imgPath" \
 	"$mpdTitle" \
-"By: <b><i>${mpdArtist}</i></b>
-Album: <u><i>${mpdAlbum}</i></u>
-Length: <i>${mpdLength}</i>
-Position: <i>${mpdSongID} / ${mpdPlaylist}</i>"
+"$(mpc current --format \
+'By: <b><i>%artist%</i></b>
+Album: <u><i>%album%</i></u>')
+Span: <i>${mpdTime}</i>
+Que: <i>${mpdQue}</i>"
